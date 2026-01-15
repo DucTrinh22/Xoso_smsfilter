@@ -111,12 +111,21 @@ def render_results(results, has_data=False):
                         if ma_nhom == 'ĐáX':
                             # MN/MT: 18 giải, cho cho 1 đài  
                             he_so = 18
-                            gia_tri_xac = so_luong_so * cuoc.tien * he_so
+                            n = len(cuoc.so_danh)
+                            if n >= 2:
+                                so_cap = n * (n - 1) // 2
+                            else: so_cap = 0
+                            gia_tri_xac = 2 * cuoc.tien * he_so * so_cap
+
                         # 2. Tính Xác cho ĐáT (2 đài)
                         elif ma_nhom == 'ĐáT':
                             # MN/MT: 18 giải, MB: 27 giải
                             he_so = 27 if is_mb else 36
-                            gia_tri_xac = so_luong_so * cuoc.tien * he_so
+                            n = len(cuoc.so_danh)
+                            if n >= 2:
+                                so_cap = n * (n - 1) // 2
+                            else: so_cap = 0
+                            gia_tri_xac = 2 * cuoc.tien * he_so * so_cap
 
                         # 3. Tính Xác cho 2CB (Bao lô, Đầu, Đuôi, Đầu đuôi)
                         elif ma_nhom == '2CB':
