@@ -6,6 +6,10 @@ from core.models import Cuoc, KetQuaParse
 
 class SMSParser:
 
+    def __init__(self):
+        # Biến này giúp nhớ tên đài của dòng trước đó
+        self.last_dai_found = []
+
     # --- 1. THÊM HÀM CHECK ĐÀI ---
     def _is_dai_token(self, token: str) -> bool:
         """Kiểm tra token có nằm trong danh sách tên đài không (bao gồm cả bd)"""
@@ -120,9 +124,10 @@ class SMSParser:
                 danh_sach_cuoc=[], tong_tien=0, tong_tien_format="0đ", 
                 hop_le=False, loi="Tin nhắn rỗng"
             )
-
-        # Nếu từ đầu tiên KHÔNG phải đài -> Báo lỗi ngay
-        if not self._is_dai_token(first_token):
+        
+        # - Nếu token đầu KHÔNG phải đài VÀ KHÔNG có đài cũ -> Mới báo lỗi
+        # Nếu đã có đài cũ (self.last_dai_found) thì cho qua để xử lý tiếp
+        if not self._is_dai_token(first_token) and not self.last_dai_found:
              return KetQuaParse(
                 nguon=text, da_sua=text_clean, dai=[], ten_dai=[], 
                 danh_sach_cuoc=[], tong_tien=0, tong_tien_format="0đ", 
@@ -176,6 +181,9 @@ class SMSParser:
         t = text.lower()
         # AUTO-MERGE MULTI-WORD STATIONS ---
         
+        # Đảm bảo xuống dòng được coi là khoảng trắng ---
+        # Điều này giúp dòng trên và dòng dưới không bị dính vào nhau (VD: "5n" dòng 1 dính "20" dòng 2 thành "5n20")
+        t = t.replace('\n', ' ').replace('\r', ' ')
         
         merge_map = []
         for shorts in DAI_XO_SO.values():
@@ -212,7 +220,7 @@ class SMSParser:
         
         # 2. Biến mọi ký tự ngăn cách thành khoảng trắng (bao gồm cả dấu chấm giữa các số)
         # Lưu ý: Với lô đề, số thập phân ít dùng cho số đánh (chỉ dùng cho tiền 1.5tr)
-        t = re.sub(r'[-/+,|:.]', ' ', t)
+        t = re.sub(r'[-/+,|:]', ' ', t)
 
         
         # 3. Tách Chữ và Số dính liền (da20k -> da 20 k, x6b1 -> x 6 b 1)
@@ -348,7 +356,7 @@ class SMSParser:
         cuoc_list = []
         
         # State (Trạng thái)
-        current_dai_list = [] 
+        current_dai_list = list(self.last_dai_found)
         temp_nums = []
         
         # Regex kiểm tra
@@ -405,6 +413,10 @@ class SMSParser:
                 
                 if token.upper() not in [d.upper() for d in current_dai_list]:
                     current_dai_list.append(token)
+                    
+                # [THÊM MỚI] Cập nhật bộ nhớ ngay khi chốt được đài
+                self.last_dai_found = list(current_dai_list)
+
                 if token.upper() not in [d.upper() for d in all_dai_found]:
                     all_dai_found.append(token)
                 
