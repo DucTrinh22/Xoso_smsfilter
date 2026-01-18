@@ -45,7 +45,7 @@ def render_results(results, has_data=False):
                 st.error("⚠️ " + " | ".join(ss.cac_loi))
 
             if ss.hop_le and parse_res and parse_res.hop_le:
-                st.divider()
+                st.markdown("<hr style='margin: 5px 0px 10px 0px; border: 0; border-top: 1px solid #e5e7eb;'>", unsafe_allow_html=True)
                 
                 # Duyệt từng cược
                 for idx, cuoc in enumerate(parse_res.danh_sach_cuoc):
@@ -61,7 +61,7 @@ def render_results(results, has_data=False):
                         if check_info['status'] == 'win':
                             bg_color = "#d1fae5" # Xanh
                             border_color = "#10b981"
-                            note_html = f"<br>🎁 <b>{check_info['message']}</b>"
+                            note_html = f"<br>🎁 <b style='color: #008000; font-size: 1.2em;'>{check_info['message']}</b>"
                         elif check_info['status'] == 'lose':
                             bg_color = "#fee2e2" # Đỏ
                             border_color = "#ef4444"
@@ -327,8 +327,6 @@ def render_results(results, has_data=False):
 
     # --- BƯỚC 3: HIỂN THỊ TỔNG KẾT THEO TỪNG NHÓM ---
     if has_any_bet:
-        st.markdown("---")
-        st.subheader("💰 Tổng  Xác & Qua Cò")
         
         # Tạo danh sách các nhóm có tiền để hiển thị
         active_groups = []
@@ -350,7 +348,7 @@ def render_results(results, has_data=False):
             st.markdown("---")
             
             # Danh sách thứ tự hiển thị
-            display_order = ['2CB', '3CB', '4CB', '3CXC', '3CXĐ', '3CBĐ', '4CBĐ', 'ĐáX', 'ĐáT']
+            display_order = ['2CB', 'ĐáX', 'ĐáT', '3CB', '3CXC', '3CXĐ', '3CBĐ', '4CBĐ', '4CB']
             
             # Biến tính tổng tiền qua cò
             total_quaco_all = 0
@@ -361,17 +359,22 @@ def render_results(results, has_data=False):
             # --- CỘT 1: HIỂN THỊ TỔNG XÁC ---
             with c1:
                 st.markdown("##### 📝 Tổng Xác")
+                html_xac = "" # Biến chưa nội dung html
                 for key in display_order:
                     val = group_totals.get(key, 0)
                     if val > 0:
                         # Format số tiền: 3,645
                         str_val = f"{val:,.0f}".replace(",", ".")
-                        # In ra dòng: 2CB: 3.645
-                        st.markdown(f"**{key}**: {str_val}")
+                        # Thay đổi số '4px' ở dưới để chỉnh khoảng cách
+                        html_xac += f"<div style='margin-bottom: 4px; font-size: 16px;'><b>{key}</b>: {str_val}</div>"
+                
+                # Render 1 lần duy nhất
+                st.markdown(html_xac, unsafe_allow_html=True)
 
             # --- CỘT 2: HIỂN THỊ QUA CÒ & TÍNH TỔNG ---
             with c2:
                 st.markdown("##### 💸 Qua Cò (x0.8)")
+                html_quaco = "" # Biến chưa nội dung html
                 for key in display_order:
                     val = group_totals.get(key, 0)
                     if val > 0:
@@ -381,8 +384,10 @@ def render_results(results, has_data=False):
                         
                         # Format số tiền
                         str_quaco = f"{quaco:,.0f}".replace(",", ".")
-                        # In ra dòng: 2CB: 2.916 (ví dụ)
-                        st.markdown(f"**{key}**: {str_quaco}")
+                        html_quaco += f"<div style='margin-bottom: 4px; font-size: 16px;'><b>{key}</b>: {str_quaco}</div>"
+                
+                # Render 1 lần duy nhất
+                st.markdown(html_quaco, unsafe_allow_html=True)
 
             # --- HIỂN THỊ TỔNG CỘNG TIỀN QUA CÒ ---
             st.divider()
