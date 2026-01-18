@@ -16,7 +16,7 @@ LOAI_CUOC = {
     'xcdau': {'ten': 'Xỉu chủ đầu', 'chu_so': 3},
     'xcduoi': {'ten': 'Xỉu chủ đuôi', 'chu_so': 3},
     'xcdao': {'ten': 'Xỉu đảo', 'chu_so': 3},
-    'bd': {'ten': 'Bao đảo', 'chu_so': [3,4]},
+    # 'bd': {'ten': 'Bao đảo', 'chu_so': [3,4]},
     'bdao': {'ten': 'Bao đảo', 'chu_so': [3,4]},
 }
 
@@ -35,7 +35,7 @@ DAI_XO_SO = {
     "An Giang": {"AG", "ag", "angiang", "an giang"}, 
     "Bình Thuận": {"BTh", "bth", "binhthuan", "binh thuan"},
     "Vĩnh Long": {"VL", "vl", "vinhlong", "vinh long"}, 
-    "Bình Dương": {"BD", "bd", "binhduong", "binh duong"}, 
+    "Bình Dương": {"BD", "bduong", "bdg", "bd", "binhduong", "binh duong"}, 
     "Long An": {"LA", "la", "longan", "long an"}, 
     "Trà Vinh": {"TV", "tv", "travinh", "tra vinh"},
     "Bình Phước": {"BP", "bp", "binhphuoc", "binh phuoc"}, 
