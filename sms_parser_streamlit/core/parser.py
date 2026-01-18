@@ -292,7 +292,8 @@ class SMSParser:
             # Kiểm tra xem từ ĐÃ SỬA (mapped_token) có phải là lệnh cược không
             if mapped_token in base_bet_keywords:
                 is_bet_keyword = True
-            elif mapped_token == 'bd':
+
+            """ elif mapped_token == 'bd':
                 # Logic riêng cho Bao Đảo
                 if i == 0:
                     is_bet_keyword = False 
@@ -303,7 +304,7 @@ class SMSParser:
                     else:
                         is_bet_keyword = False 
                 else:
-                    is_bet_keyword = False
+                    is_bet_keyword = False """
 
             # [BƯỚC 2] Lưu token vào danh sách kết quả
             if is_bet_keyword:
@@ -382,17 +383,17 @@ class SMSParser:
             is_dai = False
             # Logic phân biệt BD (Bình Dương) và BD (Bao Đảo)
             # Nếu gặp chữ 'bd' mà trước đó ĐANG CÓ SỐ (temp_nums > 0) -> Thì nó là Loại cược (Bao đảo), KHÔNG phải Đài
-            if token == 'bd':
+            """ if token == 'bd':
                 if len(temp_nums) > 0:
                     is_dai = False # Có số trước mặt -> Là Bao đảo
                 else:
                     is_dai = True  # Không có số -> Là đài Bình Dương
             else:
-                # Check các đài khác bình thường
-                for shorts in DAI_XO_SO.values():
-                    if token in [s.lower() for s in shorts]:
-                        is_dai = True
-                        break
+                # Check các đài khác bình thường """
+            for shorts in DAI_XO_SO.values():
+                if token in [s.lower() for s in shorts]:
+                    is_dai = True
+                    break
             
             if is_dai:
                 is_prev_dai = False
