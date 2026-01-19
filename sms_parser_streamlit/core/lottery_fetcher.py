@@ -38,13 +38,20 @@ class MinhNgocFetcher:
             for table in tables:
                 # 1. HEADER: Xác định tên các đài
                 tinh_cells = table.find_all(class_='tinh')
-                if not tinh_cells: continue
                 
                 provinces = []
-                for node in tinh_cells:
-                    raw = node.get_text(strip=True)
-                    norm_name = self._normalize_station_name(raw)
-                    provinces.append(norm_name)
+
+                if not tinh_cells and 'mien-bac' in region_slug:
+                    provinces = ['Miền Bắc']
+                # Nếu không phải Miền Bắc mà không có header thì bỏ qua (Logic cũ)
+                elif not tinh_cells: 
+                    continue
+                else:
+                    # Logic lấy tên đài cho MN/MT
+                    for node in tinh_cells:
+                        raw = node.get_text(strip=True)
+                        norm_name = self._normalize_station_name(raw)
+                        provinces.append(norm_name)
                 
                 num_provinces = len(provinces)
                 if num_provinces == 0: continue
@@ -55,7 +62,7 @@ class MinhNgocFetcher:
                 else:
                     current_results = {p: [] for p in provinces}
 
-                # 2. BODY: Duyệt từng dòng 
+                # 2. Duyệt từng dòng 
                 rows = table.find_all('tr')
                 for row in rows:
                     if row.find(class_='tinh'): continue # Bỏ qua header
