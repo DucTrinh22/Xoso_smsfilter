@@ -61,7 +61,7 @@ class BetChecker:
                             hits += 1
                     if hits > 0:
                         win_total += hits
-                        detail.append(f"Lô {so} ({station_name}: {hits} con)")
+                        detail.append(f"Lô {so} ({station_name}: {hits} lần)")
                         winning_numbers.add(so)
 
             # 2. ĐẦU (G8 - Index 0)
