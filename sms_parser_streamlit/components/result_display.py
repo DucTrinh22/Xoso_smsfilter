@@ -31,7 +31,7 @@ def render_results(results, has_data=False):
             status_icon = "✅"
             header_text = f"{status_icon} {ss.tin_nhan_goc}"
             
-        with st.expander(header_text, expanded=False):
+        with st.expander(header_text, expanded=True):
             # Layout: Gốc | Sửa
             c1, c2 = st.columns(2)
             with c1:
