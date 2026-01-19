@@ -60,48 +60,48 @@ parser = SMSParser()
 fetcher = MinhNgocFetcher()
 
 # --- 2. HIỂN THỊ KẾT QUẢ XỔ SỐ TỪ WEB ---
-st.info(f"Đang xem: **{khu_vuc}** - Ngày: **{date_str_api}**")
+with st.expander(f"🎲 Kết quả Xổ Số: {khu_vuc} - Ngày {date_str_api}", expanded=False):
 
-# URL để hiển thị (Embed view)
-url_embed = f"https://www.minhngoc.net.vn/ket-qua-xo-so/{region_slug}/{date_str_api}.html"
+    # URL để hiển thị (Embed view)
+    url_embed = f"https://www.minhngoc.net.vn/ket-qua-xo-so/{region_slug}/{date_str_api}.html"
 
-try:
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    # Request nhẹ để lấy HTML bảng kết quả
-    resp = requests.get(url_embed, headers=headers, timeout=10)
-    
-    if resp.status_code == 200:
-        resp.encoding = 'utf-8'
-        soup = BeautifulSoup(resp.text, 'html.parser')
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        # Request nhẹ để lấy HTML bảng kết quả
+        resp = requests.get(url_embed, headers=headers, timeout=10)
         
-        # Lấy bảng kết quả (box_kqxs)
-        content_div = soup.find('div', class_='box_kqxs')
-        
-        if content_div:
-            # CSS tối giản để hiển thị gọn
-            css = """
-            <style>
-                body { font-family: sans-serif; margin: 0; padding: 0; }
-                .box_kqxs { border: 1px solid #ddd; }
-                table { width: 100%; border-collapse: collapse; font-size: 14px; }
-                td, th { border: 1px solid #eee; padding: 4px; text-align: center; }
-                .tinh { color: #d32f2f; font-weight: bold; }
-                .giai_db { color: red; font-weight: bold; font-size: 16px; }
-                /* Ẩn các thành phần thừa */
-                .opt_date, .buttons-wrapper, .box_kqxs_tructiep { display: none !important; }
-            </style>
-            """
-            html_show = f'<base href="https://www.minhngoc.net.vn/" target="_blank">{css}{str(content_div)}'
-            components.html(html_show, height=500, scrolling=True)
+        if resp.status_code == 200:
+            resp.encoding = 'utf-8'
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            
+            # Lấy bảng kết quả (box_kqxs)
+            content_div = soup.find('div', class_='box_kqxs')
+            
+            if content_div:
+                # CSS tối giản để hiển thị gọn
+                css = """
+                <style>
+                    body { font-family: sans-serif; margin: 0; padding: 0; }
+                    .box_kqxs { border: 1px solid #ddd; }
+                    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+                    td, th { border: 1px solid #eee; padding: 4px; text-align: center; }
+                    .tinh { color: #d32f2f; font-weight: bold; }
+                    .giai_db { color: red; font-weight: bold; font-size: 16px; }
+                    /* Ẩn các thành phần thừa */
+                    .opt_date, .buttons-wrapper, .box_kqxs_tructiep { display: none !important; }
+                </style>
+                """
+                html_show = f'<base href="https://www.minhngoc.net.vn/" target="_blank">{css}{str(content_div)}'
+                components.html(html_show, height=500, scrolling=True)
+            else:
+                st.warning("Chưa tìm thấy bảng kết quả (hoặc web thay đổi cấu trúc).")
         else:
-            st.warning("Chưa tìm thấy bảng kết quả (hoặc web thay đổi cấu trúc).")
-    else:
-        st.error("Không tải được trang Minh Ngọc.")
+            st.error("Không tải được trang Minh Ngọc.")
 
-except Exception as e:
-    st.error(f"Lỗi tải bảng KQ: {e}")
+    except Exception as e:
+        st.error(f"Lỗi tải bảng KQ: {e}")
 
-st.divider()
+    st.divider()
 
 # --- 3. KHUNG NHẬP LIỆU ---
 lines = render_input_form()
@@ -109,11 +109,14 @@ col_act1, col_act2 = st.columns([1, 4])
 
 with col_act1:
     btn_run = st.button("Phân tích sms", type="primary")
+
+def clear_text_callback():
+    if "input_sms_area" in st.session_state:
+        st.session_state.input_sms_area = ""
+
 with col_act2:
-    if st.button("Làm mới"):
-        if "input_sms_area" in st.session_state:
-            st.session_state.input_sms_area = ""
-        st.rerun()
+    # Gán hàm vào sự kiện on_click
+    st.button("Xóa sms", on_click=clear_text_callback)
 
 # --- 4. XỬ LÝ LOGIC CHÍNH ---
 if "results" not in st.session_state:
