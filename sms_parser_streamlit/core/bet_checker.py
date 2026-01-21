@@ -1,10 +1,19 @@
 # core/bet_checker.py
 import itertools
+import re
 from config.constants import DAI_XO_SO
 
 class BetChecker:
     def __init__(self, kqxs_data):
-        self.kqxs = kqxs_data 
+        # --- FIX BUG: Chuyển toàn bộ kết quả sang dạng chuỗi (String) ---
+        # Để tránh lỗi "int object has no len()" hoặc "no endswith"
+        self.kqxs = {}
+        if kqxs_data:
+            for dai, list_kq in kqxs_data.items():
+                # Ép kiểu từng số trong danh sách kết quả thành string
+                self.kqxs[dai] = [str(x) for x in list_kq]
+        else:
+            self.kqxs = {} 
 
     def get_station_result(self, dai_raw):
         """
@@ -22,8 +31,50 @@ class BetChecker:
                 if key_config in self.kqxs:
                     return self.kqxs[key_config]
         return None
+    
+    def expand_number_list(self, so_danh_list):
+        """
+        Xử lý logic 'kéo':
+        - 00 keo 09 -> bước nhảy 1 -> 00, 01, 02...
+        - 00 keo 90 -> bước nhảy 10 -> 00, 10, 20...
+        """
+        ket_qua = []
+        for item in so_danh_list:
+            s = str(item).lower().strip()
+            # Nếu phát hiện từ khóa 'keo' hoặc 'kéo'
+            if 'keo' in s or 'kéo' in s:
+                try:
+                    parts = re.split(r'kéo|keo', s)
+                    if len(parts) == 2:
+                        start_str = parts[0].strip()
+                        end_str = parts[1].strip()
+                        start = int(start_str)
+                        end = int(end_str)
+                        
+                        # LOGIC QUAN TRỌNG: Kiểm tra đuôi
+                        # Nếu đuôi giống nhau (vd 00 - 90) -> Bước nhảy là 10
+                        if start % 10 == end % 10:
+                            step = 10
+                        else:
+                            step = 1
+                            
+                        # Tạo dãy số
+                        current = start
+                        while current <= end:
+                            # Giữ nguyên định dạng số 0 ở đầu (vd: '05')
+                            len_format = len(start_str) 
+                            ket_qua.append(str(current).zfill(len_format))
+                            current += step
+                    else:
+                        ket_qua.append(s)
+                except:
+                    ket_qua.append(s) # Lỗi thì trả về gốc
+            else:
+                ket_qua.append(s)
+        return ket_qua
 
     def check_cuoc(self, cuoc):
+        ds_so_chi_tiet = self.expand_number_list(cuoc.so_danh)
         list_dai_names = [d.strip() for d in cuoc.ten_dai.split(',')]
         
         # Kiểm tra xem có dữ liệu của đài nào không
@@ -65,7 +116,7 @@ class BetChecker:
             
             # 1. BAO LÔ (18 giải)
             if cuoc.loai_cuoc in ['bao', 'blo', 'b']:
-                for so in cuoc.so_danh:
+                for so in ds_so_chi_tiet:
                     hits = 0
                     for res in results:
                         if len(res) >= len(so) and res.endswith(so):
@@ -78,7 +129,7 @@ class BetChecker:
             # 2. ĐẦU (G8 - Index 0)
             elif cuoc.loai_cuoc in ['dau', 'ddau']:
                 g8 = results[0]
-                for so in cuoc.so_danh:
+                for so in ds_so_chi_tiet:
                     if g8.endswith(so):
                         win_total += 1
                         detail.append(f"Đầu {so} ({station_name})")
@@ -87,7 +138,7 @@ class BetChecker:
             # 3. ĐUÔI (ĐB - Index cuối)
             elif cuoc.loai_cuoc in ['duoi']:
                 db = results[-1]
-                for so in cuoc.so_danh:
+                for so in ds_so_chi_tiet:
                     if db.endswith(so):
                         win_total += 1
                         detail.append(f"Đuôi {so} ({station_name})")
@@ -96,7 +147,7 @@ class BetChecker:
             # 4. ĐẦU ĐUÔI (G8 + ĐB)
             elif cuoc.loai_cuoc in ['dd']:
                 targets = [results[0], results[-1]]
-                for so in cuoc.so_danh:
+                for so in ds_so_chi_tiet:
                     cnt = 0
                     for t in targets:
                         if t.endswith(so): cnt += 1
@@ -109,9 +160,9 @@ class BetChecker:
             # Thường Đá thẳng là cùng 1 đài. Đá xiên quay là nhiều đài.
             # Ở đây ta giữ logic đơn giản: Gom tất cả số trúng của mọi đài vào 1 pool rồi tính xiên.
                 pass 
-            # [MỚI] 6. 3 CON BAO ĐẢO (3CBĐ)
+            # 6. 3 CON BAO ĐẢO (3CBĐ)
             elif cuoc.loai_cuoc in [ 'baodao', 'bdao']:
-                for so in cuoc.so_danh:
+                for so in ds_so_chi_tiet:
                     # Bỏ qua nếu số quá ngắn (vd đánh đảo số '1')
                     if len(so) < 2: continue 
 
@@ -146,7 +197,7 @@ class BetChecker:
             
             # Tìm tất cả số xuất hiện trong tất cả các đài đã chọn
             for st_name, res_list in valid_stations.items():
-                for so in cuoc.so_danh:
+                for so in ds_so_chi_tiet:
                     # Lô 18 giải
                     for r in res_list:
                         if r.endswith(so):
@@ -155,8 +206,8 @@ class BetChecker:
                             # all_hits_msg.append(f"{so} ({st_name})") 
                             break 
 
-            if len(cuoc.so_danh) >= 2:
-                pairs = list(itertools.combinations(cuoc.so_danh, 2))
+            if len(ds_so_chi_tiet) >= 2:
+                pairs = list(itertools.combinations(ds_so_chi_tiet, 2))
                 for p1, p2 in pairs:
                     if p1 in found_nums and p2 in found_nums:
                         win_total += 1
@@ -203,7 +254,7 @@ class BetChecker:
                     targets.extend(giai_dau_list)
 
                 # --- BƯỚC 3: DÒ SỐ ---
-                for so in cuoc.so_danh:
+                for so in ds_so_chi_tiet:
                     hits_in_station = 0
                     for val in targets:
                         # Chỉ dò nếu giải có đủ 3 số trở lên
