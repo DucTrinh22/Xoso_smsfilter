@@ -33,6 +33,17 @@ class BetChecker:
         for name in list_dai_names:
             res = self.get_station_result(name)
             if res:
+                # === [LOGIC MỚI] LÀM SẠCH DỮ LIỆU MIỀN BẮC ===
+                # Nếu là Miền Bắc, tìm giải ĐB (5 số) đầu tiên, cắt bỏ phần rác phía trước
+                if name == 'Miền Bắc' and len(res) > 0:
+                    try:
+                        # Tìm vị trí (index) của số đầu tiên có độ dài >= 5 (Giải ĐB)
+                        idx_db = next(i for i, x in enumerate(res) if len(str(x)) >= 5)
+                        # Cắt bỏ toàn bộ phần rác đứng trước giải ĐB
+                        res = res[idx_db:]
+                    except StopIteration:
+                        # Nếu không tìm thấy số nào 5 chữ số (Dữ liệu lỗi), giữ nguyên
+                        pass
                 valid_stations[name] = res
                 found_any_station = True
         
@@ -97,7 +108,36 @@ class BetChecker:
             # 5. ĐÁ / XIÊN (Cần logic đặc biệt: Xiên có thể ghép cùng 1 đài hoặc khác đài?)
             # Thường Đá thẳng là cùng 1 đài. Đá xiên quay là nhiều đài.
             # Ở đây ta giữ logic đơn giản: Gom tất cả số trúng của mọi đài vào 1 pool rồi tính xiên.
-            pass 
+                pass 
+            # [MỚI] 6. 3 CON BAO ĐẢO (3CBĐ)
+            elif cuoc.loai_cuoc in [ 'baodao', 'bdao']:
+                for so in cuoc.so_danh:
+                    # Bỏ qua nếu số quá ngắn (vd đánh đảo số '1')
+                    if len(so) < 2: continue 
+
+                    # 1. Sinh hoán vị (Tự động xử lý 3 số hay 4 số)
+                    # Dùng set để loại bỏ số trùng (VD: 112 đảo chỉ ra 112, 121, 211)
+                    perms = set([''.join(p) for p in itertools.permutations(so)])
+                    
+                    hit_total_so = 0 # Tổng số lần trúng của cụm này
+                    
+                    # 2. Dò từng số hoán vị với bảng kết quả
+                    for p_so in perms:
+                        hits_p = 0
+                        for res in results:
+                            # Tự động kiểm tra độ dài:
+                            # Nếu đánh 4 con, giải nào có 2,3 số sẽ bị bỏ qua
+                            if len(res) >= len(p_so) and res.endswith(p_so):
+                                hits_p += 1
+                        
+                        if hits_p > 0:
+                            hit_total_so += hits_p
+                            # Chi tiết: Ghi rõ trúng số nào (đảo) từ số gốc nào
+                            detail.append(f"Đảo {p_so} (gốc {so}) ({station_name}: {hits_p} lần)")
+                    
+                    if hit_total_so > 0:
+                        win_total += hit_total_so
+                        winning_numbers.add(so)
 
         # --- XỬ LÝ RIÊNG CHO ĐÁ/XIÊN (Gom pool số trúng của tất cả đài) ---
         if cuoc.loai_cuoc in ['da', 'dax', 'daxien']:
@@ -124,26 +164,59 @@ class BetChecker:
                         winning_numbers.add(p1); winning_numbers.add(p2)
         
         # --- XỬ LÝ XỈU CHỦ (Tách đài) ---
-        elif cuoc.loai_cuoc in ['xc', 'xcduoi']:
+        elif cuoc.loai_cuoc in ['xc', 'xcdd', 'xcduoi', 'xcdau']:
              for station_name, results in valid_stations.items():
-                db = results[-1]
-                for so in cuoc.so_danh:
-                    if len(db) >= 3 and db.endswith(so):
-                        win_total += 1
-                        detail.append(f"XC {so} ({station_name})")
-                        winning_numbers.add(so)
+                is_mb = (station_name == 'Miền Bắc')
+                targets = []
 
-        elif cuoc.loai_cuoc in ['xcdau']:
-             for station_name, results in valid_stations.items():
-                if len(results) > 1: # G7 thường ở vị trí index 1
-                    g7 = results[1]
-                    for so in cuoc.so_danh:
-                        if len(g7) >= 3 and g7.endswith(so):
-                            win_total += 1
-                            detail.append(f"XC Đầu {so} ({station_name})")
-                            winning_numbers.add(so)
+                # --- BƯỚC 1: XÁC ĐỊNH GIẢI ĐẦU & GIẢI ĐUÔI ---
+                
+                # A. MIỀN BẮC (Logic riêng theo yêu cầu)
+                if is_mb:
+                    # ĐUÔI = Giải Đặc Biệt (Nằm đầu danh sách index 0)
+                    giai_duoi_list = [results[0]] if len(results) > 0 else []
+                    
+                    # ĐẦU = Giải 6 (Các giải có đúng 3 chữ số)
+                    giai_dau_list = [r for r in results if len(r) == 3]
+
+                # B. MIỀN NAM / TRUNG (Logic chuẩn)
+                else:
+                    # ĐUÔI = Giải Đặc Biệt (Nằm cuối danh sách)
+                    giai_duoi_list = [results[-1]] if len(results) > 0 else []
+                    
+                    # ĐẦU = Giải 7 (Nằm vị trí index 1, sau giải 8)
+                    giai_dau_list = [results[1]] if len(results) > 1 else []
+
+                # --- BƯỚC 2: CHỌN GIẢI DỰA VÀO LOẠI CƯỢC ---
+                
+                # Trường hợp 1: XC ĐUÔI -> Chỉ lấy Giải Đuôi (MB là ĐB, MN là ĐB)
+                if cuoc.loai_cuoc == 'xcduoi':
+                    targets.extend(giai_duoi_list)
+
+                # Trường hợp 2: XC ĐẦU -> Chỉ lấy Giải Đầu (MB là G6, MN là G7)
+                elif cuoc.loai_cuoc == 'xcdau':
+                    targets.extend(giai_dau_list)
+
+                # Trường hợp 3: XC (Cả Đầu + Đuôi)
+                else: # 'xc', 'xcdd'
+                    targets.extend(giai_duoi_list)
+                    targets.extend(giai_dau_list)
+
+                # --- BƯỚC 3: DÒ SỐ ---
+                for so in cuoc.so_danh:
+                    hits_in_station = 0
+                    for val in targets:
+                        # Chỉ dò nếu giải có đủ 3 số trở lên
+                        if len(val) >= 3 and val.endswith(so):
+                            hits_in_station += 1
+                    
+                    if hits_in_station > 0:
+                        win_total += hits_in_station
+                        detail.append(f"XC {so} ({station_name}: {hits_in_station} lần)")
+                        winning_numbers.add(so)
 
         if win_total > 0:
             return {"status": "win", "message": ", ".join(detail), "win_count": win_total, "winning_numbers": list(winning_numbers)}
         else:
-            return {"status": "lose", "message": "Trượt", "win_count": 0, "winning_numbers": []}
+            return {"status": "lose", "message": "Thua", "win_count": 0, "winning_numbers": []}
+        
