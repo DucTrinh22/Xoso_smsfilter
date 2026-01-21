@@ -74,8 +74,8 @@ def render_input_form():
         .stTextArea textarea {
             font-size: 25px !important; 
             font-family: 'Courier New', monospace;
-            line-height: 1.5 !important;
-            border: 2px solid #4b7bec !important; 
+            line-height: 0.5 !important;
+            border: 3px solid #4b7bec !important; 
             border-radius: 8px !important;
             padding: 10px !important;
         }
@@ -88,7 +88,7 @@ def render_input_form():
     
     text_input = st.text_area(
         "Label ẩn",
-        height=150,
+        height=200,
         placeholder="Ví dụ: BD 98-97-99dau30n...",
         label_visibility="collapsed",
         key="input_sms_area"
