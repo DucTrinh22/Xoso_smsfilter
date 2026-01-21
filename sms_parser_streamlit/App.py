@@ -10,7 +10,7 @@ from core.bet_checker import BetChecker
 from core.comparator import SMSComparator
 from core.lottery_fetcher import MinhNgocFetcher
 from core.parser import SMSParser
-from components.input_form import render_input_form
+from components.input_form import render_input_form, render_syntax_check
 from components.result_display import render_results
 
 # Config trang
@@ -117,6 +117,9 @@ def clear_text_callback():
 with col_act2:
     # Gán hàm vào sự kiện on_click
     st.button("Xóa sms", on_click=clear_text_callback)
+
+if lines:
+    render_syntax_check(lines)
 
 # --- 4. XỬ LÝ LOGIC CHÍNH ---
 if "results" not in st.session_state:
