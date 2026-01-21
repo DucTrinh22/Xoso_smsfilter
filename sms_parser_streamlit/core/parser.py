@@ -194,21 +194,31 @@ class SMSParser:
                 start = int(start_str)
                 end = int(end_str)
                 
-                # Nếu nhập ngược "09 kéo 00" -> tự đảo lại thành 00-09
+                # Nếu nhập ngược "09 kéo 00" -> tự đảo lại
                 if start > end:
                     start, end = end, start
                 
-                # Giới hạn kéo tối đa 100 số để tránh tin nhắn bị spam/treo
-                if end - start > 100:
+                # [MỚI] LOGIC XÁC ĐỊNH BƯỚC NHẢY (STEP)
+                # Nếu cùng đuôi (00-90, 15-45) -> Bước nhảy 10
+                if start % 10 == end % 10:
+                    step = 10
+                else:
+                    step = 1
+
+                # Giới hạn số lượng (chống spam)
+                # Vì có step 10 nên ta nới lỏng giới hạn check khoảng cách một chút nếu cần,
+                # nhưng giữ logic cũ > 100 số thì bỏ qua là an toàn.
+                if (end - start) // step > 100:
                     return match.group(0) 
 
-                # Xác định độ dài định dạng (ví dụ 00 kéo 09 -> format 2 số, 000 kéo 005 -> format 3 số)
+                # Xác định độ dài định dạng
                 fmt_len = max(len(start_str), len(end_str))
                 
                 # Tạo danh sách số
                 expanded = []
-                for i in range(start, end + 1):
-                    # Format thêm số 0 đằng trước nếu cần (vd: 1 -> 01)
+                # [MỚI] Thêm tham số step vào range
+                for i in range(start, end + 1, step):
+                    # Format thêm số 0 đằng trước
                     expanded.append(f"{i:0{fmt_len}d}")
                 
                 return " ".join(expanded)
@@ -253,6 +263,11 @@ class SMSParser:
         # Regex: (Số)(,)(Số) -> \1.\2
         t = re.sub(r'(?<=\d),(?=\d)', '.', t)
         
+        # Tách số và lệnh cược bị dính bởi ký tự lạ (.-/)
+        # Ví dụ: "013.435.xc12" -> "013.435 xc12" (Sau đó dấu chấm giữa số sẽ tự tách ở bước sau)
+        # Giữ nguyên tiền: "1.5n" vẫn là "1.5n" do loại trừ n,k,d...
+        t = re.sub(r'(\d)[\.\-\/_]+(?!(?:n|k|d|đ|tr|ng|ngan)\b)([a-z]+)', r'\1 \2', t)
+
         # 2. Biến mọi ký tự ngăn cách thành khoảng trắng (bao gồm cả dấu chấm giữa các số)
         # Lưu ý: Với lô đề, số thập phân ít dùng cho số đánh (chỉ dùng cho tiền 1.5tr)
         t = re.sub(r'[-/+,|:]', ' ', t)
