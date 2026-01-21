@@ -184,6 +184,41 @@ class SMSParser:
         # Đảm bảo xuống dòng được coi là khoảng trắng ---
         # Điều này giúp dòng trên và dòng dưới không bị dính vào nhau (VD: "5n" dòng 1 dính "20" dòng 2 thành "5n20")
         t = t.replace('\n', ' ').replace('\r', ' ')
+
+        # --- LOGIC KÉO SỐ (THÊM MỚI) ---
+        # Mục đích: Biến "00 kéo 05" thành "00 01 02 03 04 05"
+        def expand_range(match):
+            start_str = match.group(1)
+            end_str = match.group(2)
+            try:
+                start = int(start_str)
+                end = int(end_str)
+                
+                # Nếu nhập ngược "09 kéo 00" -> tự đảo lại thành 00-09
+                if start > end:
+                    start, end = end, start
+                
+                # Giới hạn kéo tối đa 100 số để tránh tin nhắn bị spam/treo
+                if end - start > 100:
+                    return match.group(0) 
+
+                # Xác định độ dài định dạng (ví dụ 00 kéo 09 -> format 2 số, 000 kéo 005 -> format 3 số)
+                fmt_len = max(len(start_str), len(end_str))
+                
+                # Tạo danh sách số
+                expanded = []
+                for i in range(start, end + 1):
+                    # Format thêm số 0 đằng trước nếu cần (vd: 1 -> 01)
+                    expanded.append(f"{i:0{fmt_len}d}")
+                
+                return " ".join(expanded)
+            except Exception:
+                return match.group(0)
+
+        # Regex tìm: Số + (khoảng trắng tùy ý) + "kéo" hoặc "keo" + (khoảng trắng tùy ý) + Số
+        # Ví dụ khớp: "00kéo09", "00 keo 09", "00 keo 10"
+        regex_keo = r'(\d+)[\s\.\-,_]*(?:kéo|keo|kèo)[\s\.\-,_]*(\d+)'
+        t = re.sub(regex_keo, expand_range, t)
         
         merge_map = []
         for shorts in DAI_XO_SO.values():
