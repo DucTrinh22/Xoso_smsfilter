@@ -61,11 +61,11 @@ def render_results(results, has_data=False):
                         if check_info['status'] == 'win':
                             bg_color = "#d1fae5" # Xanh
                             border_color = "#10b981"
-                            note_html = f"<br>🎁 <b style='color: #008000; font-size: 1.2em;'>{check_info['message']}</b>"
+                            note_html = f"<br>🎁 <i>TRÚNG<i> <b style='color: #008000; font-size: 1.2em;'>{check_info['message']}</b>"
                         elif check_info['status'] == 'lose':
                             bg_color = "#fee2e2" # Đỏ
                             border_color = "#ef4444"
-                            note_html = "<br>🌑 <i>Trượt</i>"
+                            note_html = "<br>🌑 <i>THUA</i>"
                         elif check_info['status'] == 'pending':
                              bg_color = "#fff7ed" # Cam
                              border_color = "#f97316"
