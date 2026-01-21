@@ -89,11 +89,11 @@ class MinhNgocFetcher:
                         txt = cell.get_text(separator=' ', strip=True)
 
                         # === [MỚI] BỘ LỌC RÁC (JUNK FILTER) ===
-                        # Loại bỏ dòng mã vé như: "XSVL - 47VL03", "XSBD - ..."
+                        # Loại bỏ dòng mã vé như: "XSVL - 47VL03", "XSBD - MB"
                         # Logic: Nếu chuỗi chứa "XS" (Xổ Số) hoặc chứa ký tự "-" kèm chữ cái
-                        if "XS" in txt.upper() or ("-" in txt and any(c.isalpha() for c in txt)):
+                        if "XS" in txt.upper() or "UV" in txt.upper() or ("-" in txt and any(c.isalpha() for c in txt)):
                             continue
-                        # ======================================
+                        
                         
                         # Trích xuất số
                         found_nums = re.findall(r'\d{2,6}', txt.replace('.', ''))
@@ -125,7 +125,7 @@ class MinhNgocFetcher:
             return 'Miền Bắc'
 
         mapping = {
-            'tp.hcm': 'Tp.Hcm', 'thành phố': 'Tp.Hcm', 'sài gòn': 'Tp.Hcm',
+            'tp.hcm': 'Tp.Hcm', 'thành phố': 'Tp.Hcm', 'sài gòn': 'Tp.Hcm', 'tp. hcm': 'Tp.Hcm',
             'kiên giang': 'Kiên Giang', 'lâm đồng': 'Đà Lạt', 'đà lạt': 'Đà Lạt',
             'tiền giang': 'Tiền Giang', 'cà mau': 'Cà Mau', 'đồng tháp': 'Đồng Tháp',
             'bạc liêu': 'Bạc Liêu', 'bến tre': 'Bến Tre', 'vũng tàu': 'Vũng Tàu',
