@@ -74,7 +74,7 @@ def render_input_form():
         .stTextArea textarea {
             font-size: 25px !important; 
             font-family: 'Courier New', monospace;
-            line-height: 0.5 !important;
+            line-height: 1.3 !important;
             border: 3px solid #4b7bec !important; 
             border-radius: 8px !important;
             padding: 10px !important;
@@ -108,3 +108,4 @@ def render_syntax_check(lines):
                 for line in lines:
                     highlighted_html = highlight_syntax(line)
                     st.markdown(f"<div style='background-color:#f0f2f6; padding:8px; border-radius:5px; margin-bottom:5px; font-family:monospace;'>{highlighted_html}</div>", unsafe_allow_html=True)
+
