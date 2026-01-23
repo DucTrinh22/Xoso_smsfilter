@@ -211,14 +211,32 @@ def render_results(results, has_data=False):
                                 else:
                                     tong_hoan_vi += 1 # Fallback nếu số không phải 3 chữ số
 
+                            # --- LOGIC TÍNH HỆ SỐ ---
+                            ten_loai_check = cuoc.ten_loai.lower() if cuoc.ten_loai else ""
+                            he_so = 0
+                            
                             if is_mb:
-                                # MB: Hệ số 4 * Hoán vị (Theo yêu cầu)
-                                he_so = 4
-                                gia_tri_xac = tong_hoan_vi * cuoc.tien * he_so
+                                # MB: Đầu (3 giải), Đuôi (1 giải), Bao (4 giải)
+                                if 'đầu đuôi' in ten_loai_check or 'dd' in ten_loai_check:
+                                    he_so = 4
+                                elif 'đầu' in ten_loai_check or 'dau' in ten_loai_check:
+                                    he_so = 3 # Chỉ tính 3 giải đầu
+                                elif 'đuôi' in ten_loai_check or 'duoi' in ten_loai_check:
+                                    he_so = 1 # Chỉ tính 1 giải đuôi
+                                else:
+                                    he_so = 4 # Mặc định là đầu đuôi
                             else:
-                                # MN/MT: Hệ số 4 * Hoán vị (Theo yêu cầu)
-                                he_so = 2 
-                                gia_tri_xac = tong_hoan_vi * cuoc.tien * he_so * so_luong_dai
+                                # MN/MT: Đầu (1 giải), Đuôi (1 giải), Bao (2 giải)
+                                if 'đầu đuôi' in ten_loai_check or 'dd' in ten_loai_check:
+                                    he_so = 2
+                                elif 'đầu' in ten_loai_check or 'dau' in ten_loai_check:
+                                    he_so = 1
+                                elif 'đuôi' in ten_loai_check or 'duoi' in ten_loai_check:
+                                    he_so = 1
+                                else:
+                                    he_so = 2 # Mặc định là đầu đuôi
+
+                            gia_tri_xac = tong_hoan_vi * cuoc.tien * he_so * so_luong_dai
 
                         # 7.Tính xác 3CBĐ (3 Con Bao Đảo)
                         elif ma_nhom == '3CBĐ':
@@ -347,48 +365,95 @@ def render_results(results, has_data=False):
         if has_any_bet:
             st.markdown("---")
             
-            # Danh sách thứ tự hiển thị
-            display_order = ['2CB', 'ĐáX', 'ĐáT', '3CB', '3CXC', '3CXĐ', '3CBĐ', '4CBĐ', '4CB']
+            group_top = ['2CB', 'ĐáX', 'ĐáT']
+            group_bottom = ['3CB', '3CXC', '3CXĐ', '3CBĐ', '4CBĐ', '4CB']
             
-            # Biến tính tổng tiền qua cò
+            # Hàm hỗ trợ tạo HTML cho danh sách (Giúp code gọn hơn)
+            def build_html_rows(key_list, totals_dict, is_quaco=False):
+                html_out = ""
+                has_data = False
+                for key in key_list:
+                    val = totals_dict.get(key, 0)
+                    if val > 0:
+                        has_data = True
+                        final_val = val * 0.8 if is_quaco else val
+                        str_val = f"{final_val:,.0f}".replace(",", ".")
+                        
+                        # Màu sắc khác nhau cho Xác và Cò
+                        color = "#168612af" if is_quaco else "#995609" # Xanh lá hoặc Đỏ
+                        
+                        html_out += f"""
+                        <div style='margin-bottom: 6px; font-size: 25px; color: #333;'>
+                            <b>{key}: </b>
+                            <span style='color:{color}; font-weight:bold;'>{str_val}</span>
+                        </div>
+                        """
+                return html_out, has_data
+
+            # --- 2. TẠO HTML CHO TỪNG PHẦN ---
+            # Cột Tổng Xác
+            html_xac_top, has_xac_top = build_html_rows(group_top, group_totals, is_quaco=False)
+            html_xac_bot, has_xac_bot = build_html_rows(group_bottom, group_totals, is_quaco=False)
+            
+            # Cột Qua Cò
+            html_co_top, has_co_top = build_html_rows(group_top, group_totals, is_quaco=True)
+            html_co_bot, has_co_bot = build_html_rows(group_bottom, group_totals, is_quaco=True)
+
+            # Tính tổng tiền qua cò (để hiển thị ở mục Tổng Cộng to phía dưới)
             total_quaco_all = 0
+            for k, v in group_totals.items():
+                if v > 0: total_quaco_all += v * 0.8
+
+            # --- 3. ĐỊNH NGHĨA ĐƯỜNG KẺ NGĂN CÁCH ---
+            # Chỉ hiện đường kẻ khi CẢ nhóm trên và nhóm dưới đều có dữ liệu
+            separator = "<div style='margin: 8px 0; border-top: 1px solid #b2bec3; width: 60%;'></div>"
             
-            # Tạo 2 cột: Cột trái (Xác) - Cột phải (Qua cò)
+            final_html_xac = html_xac_top
+            if has_xac_top and has_xac_bot: # Nếu có cả trên và dưới thì thêm gạch
+                final_html_xac += separator
+            final_html_xac += html_xac_bot
+
+            final_html_co = html_co_top
+            if has_co_top and has_co_bot:
+                final_html_co += separator
+            final_html_co += html_co_bot
+
+            # --- 4. HIỂN THỊ RA HAI CỘT ---
             c1, c2 = st.columns(2)
             
-            # --- CỘT 1: HIỂN THỊ TỔNG XÁC ---
             with c1:
                 st.markdown("##### 📝 Tổng Xác")
-                html_xac = "" # Biến chưa nội dung html
-                for key in display_order:
-                    val = group_totals.get(key, 0)
-                    if val > 0:
-                        # Format số tiền: 3,645
-                        str_val = f"{val:,.0f}".replace(",", ".")
-                        # Thay đổi số '4px' ở dưới để chỉnh khoảng cách
-                        html_xac += f"<div style='margin-bottom: 4px; font-size: 16px;'><b>{key}</b>: {str_val}</div>"
-                
-                # Render 1 lần duy nhất
-                st.markdown(html_xac, unsafe_allow_html=True)
+                st.markdown(final_html_xac, unsafe_allow_html=True)
 
-            # --- CỘT 2: HIỂN THỊ QUA CÒ & TÍNH TỔNG ---
             with c2:
                 st.markdown("##### 💸 Qua Cò (x0.8)")
-                html_quaco = "" # Biến chưa nội dung html
-                for key in display_order:
-                    val = group_totals.get(key, 0)
-                    if val > 0:
-                        # Tính qua cò
-                        quaco = val * 0.8
-                        total_quaco_all += quaco
-                        
-                        # Format số tiền
-                        str_quaco = f"{quaco:,.0f}".replace(",", ".")
-                        html_quaco += f"<div style='margin-bottom: 4px; font-size: 16px;'><b>{key}</b>: {str_quaco}</div>"
-                
-                # Render 1 lần duy nhất
-                st.markdown(html_quaco, unsafe_allow_html=True)
+                st.markdown(final_html_co, unsafe_allow_html=True)
 
             # --- HIỂN THỊ TỔNG CỘNG TIỀN QUA CÒ ---
             st.divider()
-            st.success(f"💰 **TỔNG CỘNG (Qua Cò): {total_quaco_all:,.0f}đ**".replace(",", "."))
+            
+            # Format số tiền
+            str_tong_cong = f"{total_quaco_all:,.0f}".replace(",", ".")
+            
+            # HTML tùy chỉnh để làm thanh tổng cộng to và đẹp
+            html_total = f"""
+            <div style="
+                background-color: #d1fae5; 
+                border: 2px solid #34d399;
+                border-radius: 10px;
+                padding: 15px 20px;
+                margin-top: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            ">
+                <span style="font-size: 22px; font-weight: bold; color: #065f46;">
+                    💰 TỔNG CỘNG (Qua Cò):
+                </span>
+                <span style="font-size: 32px; font-weight: 900; color: #059669;">
+                    {str_tong_cong}đ
+                </span>
+            </div>
+            """
+            st.markdown(html_total, unsafe_allow_html=True)
