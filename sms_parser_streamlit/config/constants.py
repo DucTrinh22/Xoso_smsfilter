@@ -16,18 +16,19 @@ LOAI_CUOC = {
     'xcdau': {'ten': 'Xỉu chủ đầu', 'chu_so': 3},
     'xcduoi': {'ten': 'Xỉu chủ đuôi', 'chu_so': 3},
     'xcdao': {'ten': 'Xỉu đảo', 'chu_so': 3},
-    # 'bd': {'ten': 'Bao đảo', 'chu_so': [3,4]},
+    'xcdaoduoi': {'ten': 'Xỉu đảo đuôi', 'chu_so': 3},
+    'xcdaodau': {'ten': 'Xỉu đảo đầu', 'chu_so': 3},
     'bdao': {'ten': 'Bao đảo', 'chu_so': [3,4]},
 }
 
 DAI_XO_SO = {
     # XSMN
     "Tp.Hcm": {"TP", "tp", "tphcm"}, 
-    "Đồng Tháp": {"ĐT", "dt", "dongthap", "dong thap"}, 
-    "Cà Mau": {"CM", "cm", "ca mau"},
-    "Bến Tre": {"BT", "bt", "bentre", "ben tre"}, 
+    "Đồng Tháp": {"ĐT", "dt", "DThap", "dthap", "dongthap", "dong thap"}, 
+    "Cà Mau": {"CM", "cm", "CMau", "cmau", "ca mau"},
+    "Bến Tre": {"BT", "bt", "Btr", "btre", "bentre", "ben tre"}, 
     "Vũng Tàu": {"VT", "vt", "vungtau", "vung tau"}, 
-    "Bạc Liêu": {"BL", "bl", "baclieu", "bac lieu"},
+    "Bạc Liêu": {"BLieu", "blieu", "baclieu", "bac lieu"},
     "Đồng Nai": {"ĐN", "dn", "dongnai", "dong nai"}, 
     "Cần Thơ": {"CT", "ct", "cantho", "can tho"}, 
     "Sóc Trăng": {"ST", "st", "soctrang", "soc trang"},  
@@ -45,20 +46,20 @@ DAI_XO_SO = {
     "Đà Lạt": {"DL", "dlat", "dalat", "da lat", "đà lạt"},
     
     #    # XSMT
-    "Phú Yên": {"PY", "py","phuyen", "phu yen"},
+    "Phú Yên": {"PY", "py", "PYen", "pyen", "phuyen", "phu yen"},
     "Huế": {"hue", "Hue", "tth", "thuatienhue", "thua tien hue"},
     "Đắk Lắk": {"DLK", "dlk", "daklak", "dak lak"},
-    "Quảng Nam": {"QN", "qn", "quangnam", "quang nam"},
+    "Quảng Nam": {"QN", "qn", "QNam", "qnam", "quangnam", "quang nam"},
     "Đà Nẵng": {"DNang", "dnang", "da nang", "danang"},
-    "Khánh Hòa": {"KH", "kh", "khanhhoa", "khanh hoa"},
-    "Quảng Bình": {"QB", "qb", "quangbinh", "quang binh"},
-    "Bình Định": {"BĐ", "bđ", "binhdinh", "binh dinh"},
-    "Quảng Trị": {"QT", "qt", "quangtri", "quang tri"},
-    "Gia Lai": {"GL", "gl", "gialai", "gia lai"},
-    "Ninh Thuận": {"NT", "nt", "ninhthuan", "ninh thuan"},
+    "Khánh Hòa": {"KH", "kh", "KHoa", "khoa", "khanhhoa", "khanh hoa"},
+    "Quảng Bình": {"QB", "qb", "QBinh", "qbinh", "quangbinh", "quang binh"},
+    "Bình Định": {"BĐ", "bdinh", "BĐinh", "bđinh", "binhdinh", "binh dinh"},
+    "Quảng Trị": {"QTri", "qt","qtri", "QT", "quangtri", "quang tri"},
+    "Gia Lai": {"GLai", "gl", "GL", "glai", "gialai", "gia lai"},
+    "Ninh Thuận": {"NT", "nt", "nthuan", "ninhthuan", "ninh thuan"},
     "Quảng Ngãi": {"QNg", "qng", "quangngai", "quang ngai"},
     "Đắk Nông": {"DNong", "dnong", "daknong", "dak nong"},
-    "Kon Tum": {"KT", "kt", "kontum", "kon tum"},
+    "Kon Tum": {"KTum", "ktum", "kontum", "kon tum"},
 
     # Đài gộp
     "2 Đài MN": {"2dmn" },
@@ -80,16 +81,26 @@ TIEN_TE = {
 # Quy tắc sửa lỗi & mapping từ viết tắt
 AUTO_FIX_RULES = {
     # Loại cược viết tắt
+    # - xỉu chủ - xỉu chủ đảo - xỉu chủ đầu - xỉu chủ đuôi
     'xd': 'xcdao', 'xc dao': 'xcdao', 'xdao': 'xcdao',
     'xđ': 'xcdao', 'xc đ': 'xcdao',
     'x': 'xc', 'xe': 'xc',
     'xcd': 'xcdao', 'xc d': 'xcdao',
     'xcdui': 'xcduoi', 'xc dui': 'xcduoi',
+    # --- xỉu đảo đầu - xỉu đảo đuôi ---
+    'xdaoduoi': 'xcdaoduoi', 
+    'xc dao duoi': 'xcdaoduoi',
+    'x dao duoi': 'xcdaoduoi',
+    'xdaodau': 'xcdaodau',
+    'xc dao dau': 'xcdaodau',
+    'x dao dau': 'xcdaodau',
+    # - Bao - Bao đảo -
     'b': 'bao',
     'bl': 'bao',
     'blo': 'bao',
     'bđao': 'bdao',
     'bđ': 'bdao',
+    # - đầu đuôi - đá
     'ddau': 'dd', 'đđ': 'dd', 'dđ': 'dd',
     'daa': 'da', 'đa': 'da', "đã": 'da', 'đá': 'da',
     'đau': 'dau', 'dui': 'duoi',
@@ -151,7 +162,7 @@ CAU_HINH_NHOM_CUOC = {
     },
     '3CXĐ': {
         'ten': '3 Con Xỉu Đảo',
-        'match_types': ['xcdao', 'xd', 'xcd', 'xc dao'],
+        'match_types': ['xcdao', 'xd', 'xcd', 'xc dao', 'xcdaoduoi', 'xcdaodau'],
         'match_len': 3,
         'ty_le_an': 80,   
         'ti_le_xac': 0.8
