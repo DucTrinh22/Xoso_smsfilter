@@ -84,7 +84,7 @@ class SMSParser:
                 return False, f"Đá Xiên tối đa 6 con số."
 
         # --- RULE 3: CÁC LOẠI 3, 4 SỐ (XC, BAO ĐẢO...) ---
-        elif loai_key in ['xc', 'xcdao', 'xcdau', 'xcduoi', 'xd', 'bd', 'bdao', 'bao', 'blo', 'dd', 'dau', 'duoi']:
+        elif loai_key in ['xc', 'xcdao', 'xcdau', 'xcduoi', 'xcdaoduoi', 'xcdaodau', 'xd', 'bd', 'bdao', 'bao', 'blo', 'dd', 'dau', 'duoi']:
             
             # 1. Xác định độ dài yêu cầu
             yeu_cau_do_dai = []
@@ -94,7 +94,7 @@ class SMSParser:
                 else: yeu_cau_do_dai = cfg
             elif loai_key in ['bd', 'bdao']: 
                 yeu_cau_do_dai = [3, 4]
-            elif loai_key in ['xc', 'xcdao', 'xcdau', 'xcduoi', 'xd']:
+            elif loai_key in ['xc', 'xcdao', 'xcdau', 'xcduoi', 'xcdaoduoi', 'xcdaodau', 'xd']:
                 yeu_cau_do_dai = [3]
 
             # 2. Kiểm tra từng số
