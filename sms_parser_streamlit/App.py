@@ -105,18 +105,38 @@ with st.expander(f"🎲 Kết quả Xổ Số: {khu_vuc} - Ngày {date_str_api}"
 
 # --- 3. KHUNG NHẬP LIỆU ---
 lines = render_input_form()
-col_act1, col_act2 = st.columns([1, 4])
+st.markdown("""
+<style>
+/* 1. Tác động vào khung nút (Chiều cao, độ rộng) */
+div.stButton > button {
+    height: 60px !important;   /* Chiều cao nút */
+    width: 100%;               /* Giãn full cột */
+    border-radius: 6px;       /* Bo góc */
+}
+
+/* 2. Tác động trực tiếp vào CHỮ bên trong nút */
+div.stButton > button p {
+    font-size: 24px !important;  /* Cỡ chữ to (dùng !important để ép) */
+    font-weight: bold !important;
+    padding-top: 5px !important; /* Căn chỉnh lại nếu chữ bị lệch */
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Chia cột đều nhau [1, 1] để nút to đẹp hơn
+col_act1, col_act2 = st.columns([1, 1])
 
 with col_act1:
-    btn_run = st.button("Phân tích sms", type="primary")
+    # Thêm use_container_width=True để nút giãn hết cột
+    btn_run = st.button("Phân tích sms", type="primary", use_container_width=True)
 
 def clear_text_callback():
     if "input_sms_area" in st.session_state:
         st.session_state.input_sms_area = ""
 
 with col_act2:
-    # Gán hàm vào sự kiện on_click
-    st.button("Xóa sms", on_click=clear_text_callback)
+    # Thêm use_container_width=True để nút giãn hết cột
+    st.button("Xóa sms", on_click=clear_text_callback, use_container_width=True)
 
 if lines:
     render_syntax_check(lines)
@@ -158,7 +178,7 @@ if btn_run:
             list_check = []
             
             if res_ss.hop_le:
-                res_parse = parser.parse(res_ss.tin_nhan_sau_sua)
+                res_parse = parser.parse(res_ss.tin_nhan_sau_sua, ngay_chay=selected_date)
                 
                 # 3. Dò kết quả (Nếu có data xổ số)
                 if has_data and res_parse.hop_le:
