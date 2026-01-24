@@ -71,6 +71,27 @@ DAI_XO_SO = {
     "Miền Bắc": {"MB", "mb"},
 }
 
+LICH_QUAY_SO = {
+    "MN": {
+        0: ["Tp.Hcm", "Đồng Tháp", "Cà Mau"],           # Thứ 2
+        1: ["Bến Tre", "Vũng Tàu", "Bạc Liêu"],          # Thứ 3
+        2: ["Đồng Nai", "Cần Thơ", "Sóc Trăng"],         # Thứ 4
+        3: ["Tây Ninh", "An Giang", "Bình Thuận"],       # Thứ 5
+        4: ["Vĩnh Long", "Bình Dương", "Trà Vinh"],      # Thứ 6
+        5: ["Tp.Hcm", "Long An", "Bình Phước", "Hậu Giang"], # Thứ 7
+        6: ["Tiền Giang", "Kiên Giang", "Đà Lạt"]        # Chủ Nhật
+    },
+    "MT": {
+        0: ["Phú Yên", "Huế"],                           # Thứ 2
+        1: ["Đắk Lắk", "Quảng Nam"],                     # Thứ 3
+        2: ["Đà Nẵng", "Khánh Hòa"],                     # Thứ 4
+        3: ["Bình Định", "Quảng Trị", "Quảng Bình"],     # Thứ 5
+        4: ["Gia Lai", "Ninh Thuận"],                    # Thứ 6
+        5: ["Đà Nẵng", "Quảng Ngãi", "Đắk Nông"],        # Thứ 7
+        6: ["Kon Tum", "Khánh Hòa", "Huế"]                 # Chủ Nhật (Lưu ý check lại lịch MT tùy vùng)
+    }
+}
+
 TIEN_TE = {
     'n': 1000, 'ng': 1000, 'ngan': 1000,
     'k': 1000, 
