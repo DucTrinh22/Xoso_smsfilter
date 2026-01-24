@@ -1,8 +1,9 @@
 # core/parser.py
 import re
 from typing import List, Tuple
-from config.constants import LOAI_CUOC, DAI_XO_SO, TIEN_TE, AUTO_FIX_RULES
+from config.constants import LOAI_CUOC, DAI_XO_SO, TIEN_TE, AUTO_FIX_RULES, LICH_QUAY_SO
 from core.models import Cuoc, KetQuaParse
+from datetime import datetime
 
 class SMSParser:
 
@@ -20,6 +21,45 @@ class SMSParser:
                 return True
         return False
     
+    def _resolve_dai_gop(self, token: str, date_obj=None) -> List[str]:
+        """
+        Bung đài gộp thành danh sách đài lẻ dựa theo ngày.
+        Ví dụ: Thứ 2, token='2dmn' -> Trả về ['Tp.Hcm', 'Đồng Tháp']
+        """
+        t = token.lower()
+        
+        # Kiểm tra xem có phải đài gộp không
+        mn_match = re.match(r'^(\d)dmn$', t) # 2dmn, 3dmn
+        mt_match = re.match(r'^(\d)dmt$', t) # 2dmt, 3dmt
+        
+        if not (mn_match or mt_match):
+            return [token] # Không phải đài gộp, trả về nguyên gốc
+            
+        # Xác định vùng và số lượng đài cần lấy
+        region = "MN" if mn_match else "MT"
+        count = int(mn_match.group(1)) if mn_match else int(mt_match.group(1))
+        
+        # Xác định thứ trong tuần (0=Mon, 6=Sun)
+        if date_obj is None:
+            date_obj = datetime.now()
+        weekday = date_obj.weekday()
+        
+        # Lấy danh sách đài theo lịch
+        try:
+            todays_stations = LICH_QUAY_SO[region].get(weekday, [])
+            
+            # Nếu yêu cầu nhiều hơn thực tế (VD: Thứ 2 có 3 đài mà đòi 4dmn) -> Lấy max
+            real_count = min(count, len(todays_stations))
+            
+            if real_count <= 0:
+                return [token]
+                
+            # Lấy n đài đầu tiên
+            return todays_stations[:real_count]
+            
+        except Exception:
+            return [token]
+        
     # --- 2. CẬP NHẬT LOGIC VALIDATE THEO YÊU CẦU ---
     def _validate_logic(self, loai_key: str, nums: List[str], current_dai: List[str]) -> Tuple[bool, str]:
         """
@@ -110,7 +150,10 @@ class SMSParser:
         # Nếu chạy hết các if mà không return False -> Hợp lệ
         return True, ""
 
-    def parse(self, text: str) -> KetQuaParse:
+    def parse(self, text: str, ngay_chay=None) -> KetQuaParse:
+        # Nếu không truyền ngày, mặc định là hôm nay
+        if ngay_chay is None:
+            ngay_chay = datetime.now()
         # 1. Làm sạch cơ bản
         text_clean = self._normalize_text(text)
 
@@ -154,7 +197,7 @@ class SMSParser:
         try:
             # 5. Parse từ chuỗi đã xử lý hoàn chỉnh
             final_token_list = text_final.split()
-            all_dai_found, cuoc_list = self._parse_tokens(final_token_list)
+            all_dai_found, cuoc_list = self._parse_tokens(final_token_list, ngay_chay)
             
             unique_dai = list(set([c.ten_dai for c in cuoc_list]))
             tong_tien = sum(c.tien for c in cuoc_list)
@@ -402,7 +445,7 @@ class SMSParser:
             
         return " ".join(new_tokens)
 
-    def _parse_tokens(self, tokens: List[str]) -> Tuple[List[str], List[Cuoc]]:
+    def _parse_tokens(self, tokens: List[str], date_obj) -> Tuple[List[str], List[Cuoc]]:
         all_dai_found = [] 
         cuoc_list = []
         
@@ -445,32 +488,57 @@ class SMSParser:
                     is_dai = True
                     break
             
+            if not is_dai:
+                if re.match(r'^\d+dm[nt]$', token.lower()):
+                    is_dai = True
+            
             if is_dai:
                 is_prev_dai = False
                 if len(temp_nums) > 0:
                     raise Exception(f"Các số ({', '.join(temp_nums)}) đang bị treo. Bạn chưa nhập Loại cược và Tiền cho chúng.")
+                
+                # Thay vì add trực tiếp token (vd: 2dmn), ta bung nó ra thành list (vd: TP, DT)
+                real_stations = self._resolve_dai_gop(token, date_obj)
 
                 is_prev_dai = False
                 # Thay vì đoán từ 'prev' là gì (dễ nhầm với bd/bao đảo), 
                 # ta kiểm tra xem 'prev' có phải CHÍNH LÀ ĐÀI vừa được thêm vào danh sách không.
                 if i > 0 and len(current_dai_list) > 0:
                     pre_token = tokens[i-1]
-                    if pre_token == current_dai_list[-1]:
+
+                    # [CẬP NHẬT] So sánh token gốc để chính xác hơn cho cả đài gộp và đài đơn
+                    # Nếu token hiện tại giống hệt token trước đó -> Là tiếp tục đài cũ
+                    if pre_token == token:
+                        is_prev_dai = True
+                    # Giữ logic cũ: So sánh với đài đã bung cuối cùng (cho trường hợp đài đơn)
+                    elif len(real_stations) == 1 and real_stations[0] == current_dai_list[-1]:
                         is_prev_dai = True
                     
                 
                 if not is_prev_dai:
                     current_dai_list = [] 
                 
-                if token.upper() not in [d.upper() for d in current_dai_list]:
-                    current_dai_list.append(token)
+                # --- Thêm danh sách đài đã bung vào current_dai_list
+                for st in real_stations:
+                    # Map về tên chuẩn (viết hoa đẹp) nếu cần, hoặc giữ nguyên
+                    # Lưu ý: LICH_QUAY_SO trả về tên đầy đủ, DAI_XO_SO là tên ngắn
+                    # Để an toàn, cứ append vào list
+                    if st not in current_dai_list:
+                        current_dai_list.append(st)
                     
-                # [THÊM MỚI] Cập nhật bộ nhớ ngay khi chốt được đài
+                    # Thêm vào danh sách tổng các đài xuất hiện trong tin nhắn
+                    # (Dùng check uppercase để tránh trùng lặp hiển thị)
+                    is_in_all = False
+                    for existing in all_dai_found:
+                        if existing.lower() == st.lower():
+                            is_in_all = True
+                            break
+                    if not is_in_all:
+                        all_dai_found.append(st)
+                    
+                # Cập nhật bộ nhớ đệm
                 self.last_dai_found = list(current_dai_list)
 
-                if token.upper() not in [d.upper() for d in all_dai_found]:
-                    all_dai_found.append(token)
-                
                 temp_nums = []
                 i += 1
                 continue
