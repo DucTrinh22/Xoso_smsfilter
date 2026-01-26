@@ -104,8 +104,8 @@ class SMSParser:
                 pass # MB đá 1 đài hoặc 2d/3d thì 1 tên đài vẫn chấp nhận đá
             else:
                 # MN/MT đá chéo cần ít nhất 2 đài
-                if so_luong_dai < 2:
-                    return False, f"Đá (chéo) Miền Nam/Trung yêu cầu ít nhất 2 đài. Nếu đá 1 đài hãy dùng 'dax' (Đá xiên)."
+                if so_luong_dai < 1: 
+                     return False, f"Cược ĐÁ cần có đài."
 
         # --- RULE 2: ĐÁ XIÊN (dax) - Đá các số trong cùng 1 đài ---
         elif loai_key in ['daX', 'dax', 'daxien']:
@@ -503,15 +503,21 @@ class SMSParser:
                 is_prev_dai = False
                 # Thay vì đoán từ 'prev' là gì (dễ nhầm với bd/bao đảo), 
                 # ta kiểm tra xem 'prev' có phải CHÍNH LÀ ĐÀI vừa được thêm vào danh sách không.
-                if i > 0 and len(current_dai_list) > 0:
+                if i > 0:
                     pre_token = tokens[i-1]
-
-                    # [CẬP NHẬT] So sánh token gốc để chính xác hơn cho cả đài gộp và đài đơn
-                    # Nếu token hiện tại giống hệt token trước đó -> Là tiếp tục đài cũ
-                    if pre_token == token:
-                        is_prev_dai = True
-                    # Giữ logic cũ: So sánh với đài đã bung cuối cùng (cho trường hợp đài đơn)
-                    elif len(real_stations) == 1 and real_stations[0] == current_dai_list[-1]:
+                    
+                    # Kiểm tra xem từ đứng trước có phải là Đài hay không?
+                    # Nếu từ trước CŨNG LÀ ĐÀI -> Nghĩa là đang liệt kê -> Gộp vào (True)
+                    # Nếu từ trước là số hoặc cược -> Nghĩa là chuyển sang đài mới -> Reset (False)
+                    
+                    is_pre_token_is_station = self._is_dai_token(pre_token)
+                    
+                    # Kiểm tra thêm trường hợp đài gộp (2dmn, 3dmt...)
+                    if not is_pre_token_is_station:
+                        if re.match(r'^\d+dm[nt]$', pre_token.lower()):
+                            is_pre_token_is_station = True
+                            
+                    if is_pre_token_is_station:
                         is_prev_dai = True
                     
                 
@@ -577,11 +583,17 @@ class SMSParser:
                     else:
                         ten_dai_hien_thi = "Chưa rõ đài"
                     
-                    # Mapping tên hiển thị cho đẹp
-                    if loai_key in LOAI_CUOC:
+                    # LOGIC TỰ ĐỘNG ĐỔI TÊN ĐÁ THEO SỐ LƯỢNG ĐÀI ---
+                    if loai_key in ['da', 'daa', 'dax', 'daxien', 'daX']:
+                        # Nếu có nhiều hơn 1 đài -> Gọi là Đá thường
+                        if len(current_dai_list) > 1:
+                            ten_loai = "Đá thường"
+                        # Nếu chỉ có 1 đài -> Gọi là Đá Xiên
+                        else:
+                            ten_loai = "Đá Xiên"
+                            
+                    elif loai_key in LOAI_CUOC:
                         ten_loai = LOAI_CUOC[loai_key]['ten']
-                    elif loai_key in ['dax', 'daxien']:
-                        ten_loai = "Đá Xiên"
                     else:
                         ten_loai = loai_key
 
@@ -651,9 +663,21 @@ class SMSParser:
         return all_dai_found, cuoc_list 
 
     def _map_dai(self, code):
+        code_lower = code.lower()
+        
+        # 1. Kiểm tra xem code có trùng với tên đầy đủ (Key) trong cấu hình không
+        # (Xử lý trường hợp đài gộp trả về tên đầy đủ như 'Kon Tum')
+        for full in DAI_XO_SO.keys():
+            if full.lower() == code_lower:
+                return full
+        
+        # 2. Kiểm tra xem code có nằm trong danh sách viết tắt không
         for full, shorts in DAI_XO_SO.items():
-            if code in [s.lower() for s in shorts]: return full
-        return code.upper()
+            if code_lower in [s.lower() for s in shorts]: 
+                return full
+        
+        # 3. Nếu không tìm thấy, trả về dạng Viết Hoa Chữ Cái Đầu (thay vì UPPER)
+        return code.title()
 
     def _is_money_token(self, t):
         # Chấp nhận số có 'n', 'k', d, đ, ng, ngan  số thực 0.5 
