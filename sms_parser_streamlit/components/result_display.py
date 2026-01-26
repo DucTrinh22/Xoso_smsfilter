@@ -107,25 +107,32 @@ def render_results(results, has_data=False):
                             elif "3dmn" in ten_dai_sms or "3 đài" in ten_dai_sms:
                                 so_luong_dai = 3
                         
-                        # 1. Tính Xác cho ĐáX (Xiên 1 đài)
-                        if ma_nhom == 'ĐáX':
-                            # MN/MT: 18 giải, cho cho 1 đài  
-                            he_so = 18
+                        # Kiểm tra dựa trên ma_nhom HOẶC tên loại cược để đảm bảo bắt dính
+                        if ma_nhom in ['ĐáX', 'ĐáT'] or 'đá' in (cuoc.ten_loai.lower() if cuoc.ten_loai else ''):
                             n = len(cuoc.so_danh)
+                            # Tính số cặp: nC2
                             if n >= 2:
                                 so_cap = n * (n - 1) // 2
-                            else: so_cap = 0
-                            gia_tri_xac = 2 * cuoc.tien * he_so * so_cap
-
-                        # 2. Tính Xác cho ĐáT (2 đài)
-                        elif ma_nhom == 'ĐáT':
-                            # MN/MT: 18 giải, MB: 27 giải
-                            he_so = 27 if is_mb else 36
-                            n = len(cuoc.so_danh)
-                            if n >= 2:
-                                so_cap = n * (n - 1) // 2
-                            else: so_cap = 0
-                            gia_tri_xac = 2 * cuoc.tien * he_so * so_cap
+                            else:
+                                so_cap = 0
+                            
+                            ten_loai_str = cuoc.ten_loai.lower() if cuoc.ten_loai else ""
+                            
+                            if is_mb:
+                                # Miền Bắc: Luôn tính hệ số 27 (cho cả Đá Xiên và Đá Thường)
+                                he_so = 27
+                            else:
+                                # Miền Nam / Miền Trung
+                                # Nếu là Đá Thường (ĐáT) hoặc 2dmn va 3dmn
+                                if ma_nhom == 'ĐáT' or 'đá' in ten_loai_str or so_luong_dai == 2:
+                                    he_so = 36
+                                elif ma_nhom == 'ĐáX' or 'xiên' in ten_loai_str or so_luong_dai == 1:
+                                    # Đá Xiên (áp dụng cho 1 đài)
+                                    he_so = 18 
+                            
+                            # --- TÍNH TIỀN XÁC ---
+                            # Công thức: Tiền x Hệ số x Số Cặp
+                            gia_tri_xac = cuoc.tien * he_so * so_cap * so_luong_dai
 
                         # 3. Tính Xác cho 2CB (Bao lô, Đầu, Đuôi, Đầu đuôi)
                         elif ma_nhom == '2CB':
