@@ -122,7 +122,7 @@ AUTO_FIX_RULES = {
     'bđao': 'bdao',
     'bđ': 'bdao',
     # - đầu đuôi - đá
-    'ddau': 'dd', 'đđ': 'dd', 'dđ': 'dd',
+    'ddau': 'dd', 'đđ': 'dd', 'dđ': 'dd', 'đd': 'dd',
     'daa': 'da', 'đa': 'da', "đã": 'da', 'đá': 'da',
     'đau': 'dau', 'dui': 'duoi',
      
