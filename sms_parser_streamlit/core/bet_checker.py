@@ -243,7 +243,7 @@ class BetChecker:
                 for p1, p2 in pairs:
                     if p1 in found_nums and p2 in found_nums:
                         win_total += 1
-                        detail.append(f"Xiên {p1}-{p2}")
+                        detail.append(f"{cuoc.ten_loai} {p1}-{p2}")
                         winning_numbers.add(p1); winning_numbers.add(p2)
 
         # === XỬ LÝ XỈU CHỦ ĐẢO (XC ĐẢO) ===
