@@ -120,7 +120,7 @@ def render_results(results, has_data=False):
                             
                             if is_mb:
                                 # Miền Bắc: Luôn tính hệ số 27 (cho cả Đá Xiên và Đá Thường)
-                                he_so = 27
+                                he_so = 54
                             else:
                                 # Miền Nam / Miền Trung
                                 # Nếu là Đá Thường (ĐáT) hoặc 2dmn va 3dmn
@@ -464,3 +464,4 @@ def render_results(results, has_data=False):
             </div>
             """
             st.markdown(html_total, unsafe_allow_html=True)
+
