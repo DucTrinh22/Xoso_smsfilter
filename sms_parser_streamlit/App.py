@@ -104,7 +104,7 @@ with st.expander(f"🎲 Kết quả Xổ Số: {khu_vuc} - Ngày {date_str_api}"
     st.divider()
 
 # --- 3. KHUNG NHẬP LIỆU ---
-lines = render_input_form()
+raw_text, lines = render_input_form()
 st.markdown("""
 <style>
 /* 1. Tác động vào khung nút (Chiều cao, độ rộng) */
@@ -139,7 +139,7 @@ with col_act2:
     st.button("Xóa sms", on_click=clear_text_callback, use_container_width=True)
 
 if lines:
-    render_syntax_check(lines)
+    render_syntax_check(raw_text, lines)
 
 # --- 4. XỬ LÝ LOGIC CHÍNH ---
 if "results" not in st.session_state:
