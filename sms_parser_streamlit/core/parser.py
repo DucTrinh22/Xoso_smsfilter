@@ -65,9 +65,13 @@ class SMSParser:
         """
         Trả về: (Hợp lệ hay không, Lý do lỗi)
         """
-        # 1. Kiểm tra trùng số
-        if len(nums) != len(set(nums)):
-            return False, f"Các số đánh không được trùng nhau (số: {', '.join(nums)})"
+        # 1. Kiểm tra trùng số áp dụng cho Đá thường và Đá xiên
+        cac_loai_cam_trung = ['da', 'daa', 'dax', 'daxien', 'daX']
+    
+        if loai_key in cac_loai_cam_trung:
+            if len(nums) != len(set(nums)):
+                list_co_dau = [f"'{n}'" for n in nums] 
+            return False, f"Cược '{loai_key}' không được có số trùng nhau (số: {', '.join(list_co_dau)})"
         
         # Xác định đài MB (Vì MB có luật riêng)
         is_mb = False
@@ -654,8 +658,12 @@ class SMSParser:
                 temp_nums.append(token)
                 i += 1
                 continue
+            if len(temp_nums) > 0:
+                raise Exception(f"Không nhận diện được loại cược '{token}'.")
+            else:
+                 # Nếu không có số chờ, vẫn báo lỗi để chặt chẽ
+                 raise Exception(f"Lỗi cú pháp: Từ '{token}' không hợp lệ.")
             
-            i += 1
             # Sau khi kết thúc vòng lặp nếu số chưa được xử lý -> lỗi
         if len(temp_nums) > 0:
              raise Exception(f"Các số ở cuối tin nhắn ({', '.join(temp_nums)}) chưa có Loại cược và Tiền.")   
