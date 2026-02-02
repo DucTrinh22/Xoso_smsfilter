@@ -43,7 +43,7 @@ DAI_XO_SO = {
     "Hậu Giang": {"HG", "hg", "haugiang", "hau giang", "hgiang"}, 
     "Tiền Giang": {"TG", "tg", "tiengiang", "tien giang", "tgiang"}, 
     "Kiên Giang": {"KG", "kg", "kiengiang", "kien giang", "kgiang"},
-    "Đà Lạt": {"DL", "dlat", "dalat", "da lat", "đà lạt"},
+    "Đà Lạt": {"DL", "dlat", "dalat", "da lat", "đà lạt", "dl"},
     
     #    # XSMT
     "Phú Yên": {"PY", "py", "PYen", "pyen", "phuyen", "phu yen"},
@@ -57,7 +57,7 @@ DAI_XO_SO = {
     "Quảng Trị": {"QTri", "qt","qtri", "QT", "quangtri", "quang tri"},
     "Gia Lai": {"GLai", "gl", "GL", "glai", "gialai", "gia lai"},
     "Ninh Thuận": {"NT", "nt", "nthuan", "ninhthuan", "ninh thuan", "nth"},
-    "Quảng Ngãi": {"QNg", "qng", "quangngai", "quang ngai"},
+    "Quảng Ngãi": {"QNg", "qng", "quangngai", "quang ngai", "qngai"},
     "Đắk Nông": {"DNong", "dnong", "daknong", "dak nong"},
     "Kon Tum": {"KTum", "ktum", "kontum", "kon tum"},
 
