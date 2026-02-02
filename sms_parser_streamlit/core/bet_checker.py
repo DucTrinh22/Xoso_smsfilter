@@ -225,26 +225,41 @@ class BetChecker:
         # --- XỬ LÝ RIÊNG CHO ĐÁ/XIÊN (Gom pool số trúng của tất cả đài) ---
         if cuoc.loai_cuoc in ['da', 'dax', 'daxien']:
             all_hits_msg = []
-            found_nums = set()
+            found_counts = {so: 0 for so in ds_so_chi_tiet}
             
             # Tìm tất cả số xuất hiện trong tất cả các đài đã chọn
             for st_name, res_list in valid_stations.items():
                 for so in ds_so_chi_tiet:
-                    # Lô 18 giải
+                    # Đếm số lần số xuất hiện trong đài này
+                    count_in_station = 0
                     for r in res_list:
                         if r.endswith(so):
-                            found_nums.add(so)
-                            # Lưu lại để báo cáo (số này nổ ở đài nào)
-                            # all_hits_msg.append(f"{so} ({st_name})") 
-                            break 
+                            count_in_station += 1
+                    
+                    # Cộng dồn vào tổng số lần xuất hiện (quan trọng cho Đá nhiều đài)
+                    found_counts[so] += count_in_station
 
+            # 2. Xét các cặp số đá
             if len(ds_so_chi_tiet) >= 2:
                 pairs = list(itertools.combinations(ds_so_chi_tiet, 2))
                 for p1, p2 in pairs:
-                    if p1 in found_nums and p2 in found_nums:
+                    # Lấy số lần xuất hiện
+                    c1 = found_counts.get(p1, 0)
+                    c2 = found_counts.get(p2, 0)
+                    
+                    # Điều kiện trúng: Cả 2 số đều phải xuất hiện ít nhất 1 lần
+                    if c1 > 0 and c2 > 0:
                         win_total += 1
-                        detail.append(f"{cuoc.ten_loai} {p1}-{p2}")
-                        winning_numbers.add(p1); winning_numbers.add(p2)
+                        
+                        # --- FORMAT HIỂN THỊ KẾT QUẢ ---
+                        # Nếu trúng > 1 lần (nháy) thì hiển thị số lần
+                        # Ví dụ: "52 (2 lần)"
+                        p1_msg = f"{p1} ({c1} lần)" if c1 > 1 else p1
+                        p2_msg = f"{p2} ({c2} lần)" if c2 > 1 else p2
+                        
+                        detail.append(f"{cuoc.ten_loai} {p1_msg} - {p2_msg}")
+                        winning_numbers.add(p1)
+                        winning_numbers.add(p2)
 
         # === XỬ LÝ XỈU CHỦ ĐẢO (XC ĐẢO) ===
         elif cuoc.loai_cuoc in ['xcdao', 'xcdaoduoi', 'xcdaodau']:
