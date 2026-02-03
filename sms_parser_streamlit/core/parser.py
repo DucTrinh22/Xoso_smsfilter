@@ -206,15 +206,17 @@ class SMSParser:
             unique_dai = list(set([c.ten_dai for c in cuoc_list]))
             tong_tien = sum(c.tien for c in cuoc_list)
 
+            is_ok = True if cuoc_list else False
             return KetQuaParse(
                 nguon=text,
-                da_sua=text_final, # Hiển thị chuỗi đã tách số đẹp đẽ
+                da_sua=text_final,
                 dai=all_dai_found,
                 ten_dai=unique_dai,
                 danh_sach_cuoc=cuoc_list,
                 tong_tien=tong_tien,
                 tong_tien_format=f"{tong_tien:,}đ".replace(",", "."),
-                hop_le=True if cuoc_list else False
+                hop_le=is_ok,
+                loi=None if is_ok else "Chỉ có tên Đài thiếu thông tin Số/Tiền/Loại cược."
             )
         except Exception as e:
             return KetQuaParse(
