@@ -33,15 +33,22 @@ def highlight_syntax(text):
     if not text: return ""
     
     text_lower = text.lower()
-    text_lower = re.sub(r'[,:;]', ' ', text_lower)
+    # 1. Coi dấu chấm, phẩy, gạch chéo như khoảng trắng để tách token chuẩn hơn
+    text_lower = re.sub(r'[,:;./-]', ' ', text_lower)
+    
+    # 2. Tách chữ và số nhưng TRỪ các đơn vị tiền tệ ra (để 10n không bị tách)
+    # Tách Chữ + Số: da20 -> da 20
     text_lower = re.sub(r'([a-z]+)(\d)', r'\1 \2', text_lower)
-    text_lower = re.sub(r'(\d)([a-z]+)', r'\1 \2', text_lower)
+    # Tách Số + Chữ (nếu chữ đó không phải là n, k, d, đ...): 20tp -> 20 tp
+    text_lower = re.sub(r'(\d)(?!(?:n|k|d|đ|tr|ng|ngan)\b)([a-z]+)', r'\1 \2', text_lower)
     
     tokens = text_lower.split()
     
     all_dai = set()
     for shorts in DAI_XO_SO.values():
         for s in shorts: all_dai.add(s.lower())
+    # Thêm các đài gộp vào danh sách nhận diện
+    all_dai.update(['dmn', 'dmt', 'dmb', 'mb'])
         
     all_bet = set(LOAI_CUOC.keys())
     all_bet.update(['blo', 'b', 'x', 'da', 'dá', 'dax', 'daxien', 'bao', 'dd', 'dau', 'duoi', 'bdao', 'kéo', 'keo', 'kèo'])
@@ -49,31 +56,33 @@ def highlight_syntax(text):
     html_out = []
     prev_is_num = False 
     
+    money_units = ['n', 'k', 'd', 'đ', 'tr', 'ng']
+
     for token in tokens:
         color = "black"
         style = ""
         is_num = False
         token_display = token 
         
-        if re.match(r'^\d+(\.\d+)?[nkdđ(tr)(ng)(ngan)]+$', token):
-            color = "#d63031" # Đỏ (Tiền)
+        # Kiểm tra tiền (VD: 20n, 0.5n)
+        if re.match(r'^\d+(\.\d+)?[nkdđ(tr)(ng)(ngan)]+$', token) or token in money_units:
+            color = "#d63031" # Đỏ
             style = "font-weight:bold;"
+        # Kiểm tra số đánh (VD: 95, 75)
         elif re.match(r'^\d+$', token):
-            color = "#10d8b0" # Xanh (Số)
+            color = "#10d8b0" # Xanh lục
             style = "font-weight:bold;"
             is_num = True
+        # Kiểm tra Đài hoặc Loại cược
         elif token in all_dai or token in all_bet:
-            is_dai = False; is_bet = False
-            if token == 'bd':
-                if prev_is_num: is_dai = False; is_bet = True
-                else: is_dai = True; is_bet = False
-            elif token in all_dai: is_dai = True
-            elif token in all_bet: is_bet = True
-            
-            if is_dai: color = "#0931e3"; style = "font-weight:bold;"; token_display = token.upper()
-            elif is_bet: color = "#e17055"; style = "font-weight:bold;"
+            if token in all_dai: 
+                color = "#0931e3" # Xanh dương
+                token_display = token.upper()
+            else: 
+                color = "#e17055" # Cam
+            style = "font-weight:bold;"
         else:
-            # Tô màu từ lạ/sai cú pháp
+            # Từ lạ
             color = "red"
             style = "font-weight: bold; text-decoration: underline wavy red; background-color: #ffeaa7;"
             token_display = f"{token} (?)"
@@ -178,7 +187,7 @@ def render_syntax_check(raw_text, lines):
                         
                         # 3. Trích xuất TẤT CẢ các token trong dấu nháy đơn từ thông báo lỗi
                         # Ví dụ: "Cược 'da' lỗi số '433'" -> tokens = ['da', '433']
-                        error_tokens = re.findall(r"'([^']*)'", parse_result.loi)
+                        error_tokens = re.findall(r"'([^']*)'", parse_result.loi or "")
                         
                         target_token = ""
                         match_pos_end = -1
