@@ -201,6 +201,10 @@ def render_syntax_check(raw_text, lines):
                                 # Lấy vị trí xuất hiện ĐẦU TIÊN trong dòng (hoặc logic khác nếu cần)
                                 # match.end() là vị trí con trỏ ngay sau từ đó
                                 match_pos_end = matches[0].end()
+                                if match_pos_end < len(current_raw_line):
+                                    next_char = current_raw_line[match_pos_end]
+                                    if next_char in ['.', ',', ';']:
+                                        match_pos_end += 1
                                 found_match = True
                                 break # Đã tìm thấy từ khóa quan trọng nhất, dừng lại
                         
