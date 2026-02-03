@@ -71,7 +71,7 @@ class SMSParser:
         if loai_key in cac_loai_cam_trung:
             if len(nums) != len(set(nums)):
                 list_co_dau = [f"'{n}'" for n in nums] 
-            return False, f"Cược '{loai_key}' không được có số trùng nhau (số: {', '.join(list_co_dau)})"
+                return False, f"Cược '{loai_key}' không được có số trùng nhau (số: {', '.join(list_co_dau)})"
         
         # Xác định đài MB (Vì MB có luật riêng)
         is_mb = False
@@ -322,7 +322,7 @@ class SMSParser:
         
         # 3. Tách Chữ và Số dính liền (da20k -> da 20 k, x6b1 -> x 6 b 1)
         t = re.sub(r'([^\d\s.]+)(\d)', r'\1 \2', t) # Chữ trước Số
-        t = re.sub(r'(\d)([^\d\s.]+)', r'\1 \2', t) # Số trước Chữ
+        t = re.sub(r'(\d)(?!(?:n|k|d|đ|tr|ng|ngan)\b)([^\d\s.]+)', r'\1 \2', t) # Số trước Chữ
 
         # Lúc này: "da20k" -> "da 20 k". "1.5n" -> "1 5 n" (do xóa dấu chấm ở b1)
         # Tuy nhiên, ta cần xử lý lại đơn vị tiền tệ để nó dính vào số cho dễ parse
@@ -651,7 +651,12 @@ class SMSParser:
                     
             
             if self._is_money_token(token):
-                raise Exception(f"Lỗi cú pháp: Số tiền '{token}' bị đặt sai vị trí.")
+                goi_y = ""
+                # Nếu từ trước đó là số (VD: 20), ghép lại thành 20n để báo lỗi
+                if i > 0 and re.match(r'^\d+$', tokens[i-1]):
+                    goi_y = f" (có thể ý bạn là '{tokens[i-1]}{token}'?)"
+                
+                raise Exception(f"Lỗi cú pháp: Số tiền '{token}' bị đặt sai vị trí{goi_y}.")
 
             # --- KIỂM TRA SỐ ---
             if re.match(r'^\d+$', token):
