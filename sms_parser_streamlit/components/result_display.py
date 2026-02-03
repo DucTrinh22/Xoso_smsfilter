@@ -32,14 +32,8 @@ def render_results(results, has_data=False):
             header_text = f"{status_icon} {ss.tin_nhan_goc}"
             
         with st.expander(header_text, expanded=True):
-            # Layout: Gốc | Sửa
-            c1, c2 = st.columns(2)
-            with c1:
-                st.caption("Tin nhắn gốc")
-                st.text(ss.tin_nhan_goc)
-            with c2:
-                st.caption("Tin đã sửa")
-                st.text(ss.tin_nhan_sau_sua)
+            # Layout: tin đã Sửa
+            st.markdown(f"**Tin đã sửa:** `{ss.tin_nhan_sau_sua}`")
                 
             if ss.cac_loi:
                 st.error("⚠️ " + " | ".join(ss.cac_loi))
@@ -119,7 +113,7 @@ def render_results(results, has_data=False):
                             ten_loai_str = cuoc.ten_loai.lower() if cuoc.ten_loai else ""
                             
                             if is_mb:
-                                # Miền Bắc: Luôn tính hệ số 27 (cho cả Đá Xiên và Đá Thường)
+                                # Miền Bắc: Luôn tính hệ số 54 (Đá Thường)
                                 he_so = 54
                             else:
                                 # Miền Nam / Miền Trung
@@ -326,6 +320,19 @@ def render_results(results, has_data=False):
                     
                     # --- Tạo khối hiển thị cuối cùng ---
                     # Lưu ý: Tôi đã bỏ các comment <!-- --> để tránh lỗi hiển thị HTML thừa
+                    ten_loai_hien_thi = cuoc.ten_loai
+                    ten_dai_hien_thi = cuoc.ten_dai
+                    
+                    if cuoc.ten_dai:
+                        ten_dai_lower = cuoc.ten_dai.lower()
+                        # Nếu là Miền Bắc
+                        if "mb" in ten_dai_lower or "bắc" in ten_dai_lower:
+                            # 1. Đổi tên đài thành MB (nếu muốn gọn) hoặc giữ nguyên
+                            # ten_dai_hien_thi = "MB" 
+                            
+                            # 2. Nếu là các loại đá, đổi tên thành "Đá Thường"
+                            if cuoc.ten_loai and "đá" in cuoc.ten_loai.lower():
+                                ten_loai_hien_thi = "Đá"
                     msg_html = f"""
                     <div style="
                         padding: 10px 12px; 
@@ -337,9 +344,9 @@ def render_results(results, has_data=False):
                     ">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                             <div style="flex-grow:1;">
-                                <b>[{cuoc.ten_dai}]</b> {cuoc.ten_loai}: <b style="font-size:1.1em; color:#1f2937">{', '.join(cuoc.so_danh)}</b>
+                                <b>[{ten_dai_hien_thi}]</b> {ten_loai_hien_thi}: <b style="font-size:1.3em; color:#1f2937">{', '.join(cuoc.so_danh)}</b>
                             </div>
-                            <div style="font-weight:bold; color:#111827; background:#fff; padding:2px 8px; border-radius:4px; border:1px solid #ddd; margin-left:10px; white-space:nowrap;">
+                            <div style="font-size: 1.4em; font-weight:bold; color:#111827; background:#fff; padding:2px 8px; border-radius:4px; border:1.5px solid #ddd; margin-left:10px; white-space:nowrap;">
                                 {cuoc.tien_format}
                             </div>
                         </div>
@@ -464,4 +471,3 @@ def render_results(results, has_data=False):
             </div>
             """
             st.markdown(html_total, unsafe_allow_html=True)
-
