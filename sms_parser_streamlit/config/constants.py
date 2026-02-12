@@ -68,7 +68,7 @@ DAI_XO_SO = {
     "3 Đài MT": {"3dmt"},
     
     # XSMB
-    "Miền Bắc": {"MB", "mb"},
+    "Miền Bắc": {"MB", "mb", "Mb"},
 }
 
 LICH_QUAY_SO = {
@@ -95,7 +95,7 @@ LICH_QUAY_SO = {
 TIEN_TE = {
     'n': 1000, 'ng': 1000, 'ngan': 1000,
     'k': 1000, 
-    'd': 1, 'đ': 1, 'vnd': 1,
+    'd': 1000, 'đ': 1000, 'vnd': 1,
     'tr': 1000000, 'trieu': 1000000
 }
 
