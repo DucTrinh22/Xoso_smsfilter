@@ -228,11 +228,7 @@ class SMSParser:
     def _normalize_text(self, text: str) -> str:
         """Chiến thuật: Tách rời mọi thứ dính liền, sau đó ghép lại tiền tệ."""
         t = text.lower()
-        # AUTO-MERGE MULTI-WORD STATIONS ---
         
-        # Đảm bảo xuống dòng được coi là khoảng trắng ---
-        # Điều này giúp dòng trên và dòng dưới không bị dính vào nhau (VD: "5n" dòng 1 dính "20" dòng 2 thành "5n20")
-        t = t.replace('\n', ' ').replace('\r', ' ')
 
         # --- LOGIC KÉO SỐ (THÊM MỚI) ---
         # Mục đích: Biến "00 kéo 05" thành "00 01 02 03 04 05"
