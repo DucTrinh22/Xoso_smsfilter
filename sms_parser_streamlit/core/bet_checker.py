@@ -89,7 +89,7 @@ class BetChecker:
         return ket_qua
 
     def check_cuoc(self, cuoc):
-        ds_so_chi_tiet = self.expand_number_list(cuoc.so_danh)
+        ds_so_chi_tiet = cuoc.so_danh
         list_dai_names = [d.strip() for d in cuoc.ten_dai.split(',')]
         
         # 2. Lấy dữ liệu xổ số
@@ -185,7 +185,7 @@ class BetChecker:
                         if t.endswith(so): hits += 1
                     if hits > 0:
                         win_total += hits
-                        detail.append(f"Đầu Đuôi {so} ({station_name})")
+                        detail.append(f"Đầu Đuôi {so} ({station_name}: {hits} lần)")
                         winning_numbers.add(so)
 
             # 5. ĐÁ / XIÊN (Cần logic đặc biệt: Xiên có thể ghép cùng 1 đài hoặc khác đài?)
@@ -222,9 +222,8 @@ class BetChecker:
                         win_total += hit_total_so
                         winning_numbers.add(so)
 
-        # --- XỬ LÝ RIÊNG CHO ĐÁ/XIÊN (Gom pool số trúng của tất cả đài) ---
+        # --- XỬ LÝ RIÊNG CHO ĐÁ/XIÊN ---
         if cuoc.loai_cuoc in ['da', 'dax', 'daxien']:
-            all_hits_msg = []
             found_counts = {so: 0 for so in ds_so_chi_tiet}
             
             # Tìm tất cả số xuất hiện trong tất cả các đài đã chọn
@@ -264,12 +263,10 @@ class BetChecker:
         # === XỬ LÝ XỈU CHỦ ĐẢO (XC ĐẢO) ===
         elif cuoc.loai_cuoc in ['xcdao', 'xcdaoduoi', 'xcdaodau']:
             for station_name, results in valid_stations.items(): 
-                # Chuẩn hóa dữ liệu: ép kiểu chuỗi và xóa khoảng trắng thừa
-                results = [str(r).strip() for r in results]
-                
+
                 # Xác định miền (MB hay MN/MT)
                 is_mb = 'miền bắc' in station_name.lower() or 'mb' in station_name.lower() or 'MB' in station_name.upper()
-                
+
                 xc_dau = []
                 xc_duoi = []
 
