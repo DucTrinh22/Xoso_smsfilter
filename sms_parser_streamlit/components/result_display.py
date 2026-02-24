@@ -403,6 +403,45 @@ def render_results(results, has_data=False):
                         </div>
                         """
                 return html_out, has_data
+            
+            # Tùy chỉnh kích thước và màu sắc cho nhãn 2S, 3S
+            STYLE_SUBTOTAL = {
+                "bg_color": "#a15624",  # Màu nền tím nhạt (giống hình)
+                "text_size": "24px",    # Kích thước chữ
+                "text_color": "#FFFFFF",# Màu chữ
+                "padding": "2px 10px",  # Khoảng cách đệm bên trong nhãn
+                "border_radius": "8px"  # Độ bo góc
+            }
+            def render_subtotal_label(label, value):
+                if value <= 0: return ""
+                str_val = f"{value:,.0f}".replace(",", ".")
+                return f"""
+                <div style="
+                    background-color: {STYLE_SUBTOTAL['bg_color']}; 
+                    color: {STYLE_SUBTOTAL['text_color']}; 
+                    font-size: {STYLE_SUBTOTAL['text_size']}; 
+                    font-weight: bold; 
+                    padding: {STYLE_SUBTOTAL['padding']}; 
+                    border-radius: {STYLE_SUBTOTAL['border_radius']};
+                    display: inline-block;
+                    margin: 10px 0;
+                    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+                ">
+                    {label}= {str_val}
+                </div>
+                """
+            # Tính tổng cho nhóm 2S (2CB + Đá)
+            total_2s = (group_totals.get('2CB', 0) + 
+                        group_totals.get('ĐáT', 0) + 
+                        group_totals.get('ĐáX', 0))
+
+            # Tính tổng cho nhóm 3S (Các nhóm còn lại)
+            total_3s = (group_totals.get('3CB', 0) + 
+                        group_totals.get('3CXC', 0) + 
+                        group_totals.get('3CXĐ', 0) + 
+                        group_totals.get('3CBĐ', 0) + 
+                        group_totals.get('4CBĐ', 0) + 
+                        group_totals.get('4CB', 0))
 
             # --- 2. TẠO HTML CHO TỪNG PHẦN ---
             # Cột Tổng Xác
@@ -419,55 +458,103 @@ def render_results(results, has_data=False):
                 if v > 0: total_quaco_all += v * 0.8
 
             # --- 3. ĐỊNH NGHĨA ĐƯỜNG KẺ NGĂN CÁCH ---
-            # Chỉ hiện đường kẻ khi CẢ nhóm trên và nhóm dưới đều có dữ liệu
-            separator = "<div style='margin: 8px 0; border-top: 1px solid #b2bec3; width: 60%;'></div>"
-            
-            final_html_xac = html_xac_top
-            if has_xac_top and has_xac_bot: # Nếu có cả trên và dưới thì thêm gạch
-                final_html_xac += separator
-            final_html_xac += html_xac_bot
+            if has_any_bet:
+                st.markdown("---")
+                
+                # Thiết lập nhóm
+                group_top = ['2CB', 'ĐáX', 'ĐáT']
+                group_bottom = ['3CB', '3CXC', '3CXĐ', '3CBĐ', '4CBĐ', '4CB']
 
-            final_html_co = html_co_top
-            if has_co_top and has_co_bot:
-                final_html_co += separator
-            final_html_co += html_co_bot
+                # 1. Hàm tạo nhãn (đã chỉnh size và bỏ margin thừa)
+                def get_subtotal_label_html(label, value):
+                    if value <= 0: return ""
+                    str_val = f"{value:,.0f}".replace(",", ".")
+                    return f"""
+                    <div style="
+                        background-color: #86471c; 
+                        color: #FFFFFF; 
+                        font-size: 20px; 
+                        font-weight: bold; 
+                        padding: 4px 10px; 
+                        border-radius: 6px;
+                        white-space: nowrap;
+                        box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+                    ">
+                        {label}= {str_val}
+                    </div>
+                    """
 
-            # --- 4. HIỂN THỊ RA HAI CỘT ---
-            c1, c2 = st.columns(2)
-            
-            with c1:
-                st.markdown("##### 📝 Tổng Xác")
-                st.markdown(final_html_xac, unsafe_allow_html=True)
+                # 2. Hàm tạo danh sách text số tiền
+                def build_html_rows_only(key_list, totals_dict, is_quaco=False):
+                    html_out = ""
+                    count = 0
+                    for key in key_list:
+                        val = totals_dict.get(key, 0)
+                        if val > 0:
+                            count += 1
+                            final_val = val * 0.8 if is_quaco else val
+                            str_val = f"{final_val:,.0f}".replace(",", ".")
+                            color = "#168612" if is_quaco else "#995609"
+                            html_out += f"<div style='margin-bottom: 2px; font-size: 24px; color: #333;'><b>{key}: </b><span style='color:{color}; font-weight:bold;'>{str_val}</span></div>"
+                    return html_out, count > 0
 
-            with c2:
-                st.markdown("##### 💸 Qua Cò (x0.8)")
-                st.markdown(final_html_co, unsafe_allow_html=True)
+                # Tính toán tổng
+                total_2s = sum(group_totals.get(k, 0) for k in group_top)
+                total_3s = sum(group_totals.get(k, 0) for k in group_bottom)
 
-            # --- HIỂN THỊ TỔNG CỘNG TIỀN QUA CÒ ---
-            st.divider()
-            
-            # Format số tiền
-            str_tong_cong = f"{total_quaco_all:,.0f}".replace(",", ".")
-            
-            # HTML tùy chỉnh để làm thanh tổng cộng to và đẹp
-            html_total = f"""
-            <div style="
-                background-color: #d1fae5; 
-                border: 2px solid #34d399;
-                border-radius: 10px;
-                padding: 15px 20px;
-                margin-top: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            ">
-                <span style="font-size: 22px; font-weight: bold; color: #065f46;">
-                    💰 TỔNG CỘNG (Qua Cò):
-                </span>
-                <span style="font-size: 32px; font-weight: 900; color: #059669;">
-                    {str_tong_cong}đ
-                </span>
-            </div>
-            """
-            st.markdown(html_total, unsafe_allow_html=True)
+                # 3. GIAO DIỆN CHÍNH
+                c1, c2 = st.columns(2)
+                
+                # Định nghĩa đường kẻ dùng chung để đảm bảo độ cao bằng nhau
+                shared_divider = "<div style='margin: 12px 0; border-top: 1px solid #b2bec3; width: 90%;'></div>"
+
+                with c1:
+                    st.markdown("##### 📝 Tổng Xác")
+                    html_top, has_top = build_html_rows_only(group_top, group_totals, False)
+                    if has_top:
+                        # Sử dụng flex-start và margin-left để nhãn nằm gần chữ
+                        st.markdown(f"""
+                            <div style="display: flex; align-items: center; justify-content: flex-start;">
+                                <div style="min-width: 170px;">{html_top}</div> <!-- tăng min-width để tránh nhãn bị đẩy xuống dòng -->
+                                <div style="margin-left: 20px;">{get_subtotal_label_html("2S", total_2s)}</div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Luôn hiển thị đường kẻ (hoặc ẩn nếu cả 2 bên không có dữ liệu)
+                    st.markdown(shared_divider, unsafe_allow_html=True)
+
+                    html_bot, has_bot = build_html_rows_only(group_bottom, group_totals, False)
+                    if has_bot:
+                        st.markdown(f"""
+                            <div style="display: flex; align-items: center; justify-content: flex-start;">
+                                <div style="min-width: 170px;">{html_bot}</div>
+                                <div style="margin-left: 20px;">{get_subtotal_label_html("3S", total_3s)}</div>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                with c2:
+                    st.markdown("##### 💸 Qua Cò (x0.8)")
+                    html_co_top, has_co_top = build_html_rows_only(group_top, group_totals, True)
+                    if has_co_top:
+                        st.markdown(f"<div>{html_co_top}</div>", unsafe_allow_html=True)
+                    else:
+                        # Tạo khoảng trống giả để giữ alignment nếu bên trái có mà bên phải không có
+                        st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
+
+                    # Đường kẻ bên phải (ngang hàng với bên trái)
+                    st.markdown(shared_divider, unsafe_allow_html=True)
+
+                    html_co_bot, has_co_bot = build_html_rows_only(group_bottom, group_totals, True)
+                    if has_co_bot:
+                        st.markdown(f"<div>{html_co_bot}</div>", unsafe_allow_html=True)
+
+                # --- TỔNG CỘNG CUỐI CÙNG ---
+                total_quaco_all = sum(v * 0.8 for v in group_totals.values())
+                st.divider()
+                str_tong_cong = f"{total_quaco_all:,.0f}".replace(",", ".")
+                st.markdown(f"""
+                    <div style="background-color: #d1fae5; border: 2px solid #34d399; border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 20px; font-weight: bold; color: #065f46;">💰 TỔNG CỘNG (Qua Cò):</span>
+                        <span style="font-size: 30px; font-weight: 900; color: #059669;">{str_tong_cong}đ</span>
+                    </div>
+                """, unsafe_allow_html=True)
