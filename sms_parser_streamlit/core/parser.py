@@ -29,8 +29,8 @@ class SMSParser:
         t = token.lower()
         
         # Kiểm tra xem có phải đài gộp không
-        mn_match = re.match(r'^(\d)dmn$', t) # 2dmn, 3dmn
-        mt_match = re.match(r'^(\d)dmt$', t) # 2dmt, 3dmt
+        mn_match = re.match(r'^(\d)(dmn|dai|d)$', t) # 2dmn, 3dmn
+        mt_match = re.match(r'^(\d)(dmt|d)$', t) # 2dmt, 3dmt
         
         if not (mn_match or mt_match):
             return [token] # Không phải đài gộp, trả về nguyên gốc
@@ -311,7 +311,7 @@ class SMSParser:
         # Tách số và lệnh cược bị dính bởi ký tự lạ (.-/)
         # Ví dụ: "013.435.xc12" -> "013.435 xc12" (Sau đó dấu chấm giữa số sẽ tự tách ở bước sau)
         # Giữ nguyên tiền: "1.5n" vẫn là "1.5n" do loại trừ n,k,d...
-        t = re.sub(r'(\d)[\.\-\/_]+(?!(?:n|k|d|đ|tr|ng|ngan)\b)([a-z]+)', r'\1 \2', t)
+        t = re.sub(r'(\d)[\.\-\/_]+(?!(?:n|k|d|đ|tr|ng|ngan)\b)([a-zđ]+)', r'\1 \2', t)
 
         # 2. Biến mọi ký tự ngăn cách thành khoảng trắng (bao gồm cả dấu chấm giữa các số)
         # Lưu ý: Với lô đề, số thập phân ít dùng cho số đánh (chỉ dùng cho tiền 1.5tr)
@@ -692,7 +692,7 @@ class SMSParser:
 
     def _is_money_token(self, t):
         # Chấp nhận số có 'n', 'k', d, đ, ng, ngan  số thực 0.5 
-        return bool(re.search(r'(n|k|tr|ng|d|đ)$', t))
+        return bool(re.search(r'(n|k|tr|ng|d|đ)$', t.lower()))
 
     def _parse_tien(self, t):
         try:
