@@ -62,10 +62,10 @@ DAI_XO_SO = {
     "Kon Tum": {"KTum", "ktum", "kontum", "kon tum"},
 
     # Đài gộp
-    "2 Đài MN": {"2dmn" },
-    "2 Đài MT": {"2dmt" },
-    "3 Đài MN": {"3dmn"},
-    "3 Đài MT": {"3dmt"},
+    "2 Đài MN": {"2dmn", "2d mn", "2dai", "2DMN" },
+    "2 Đài MT": {"2dmt", "2d mt", "2DMT"},
+    "3 Đài MN": {"3dmn", "3d mn", "3dai", "3DMN"},
+    "3 Đài MT": {"3dmt", "3d mt", "3DMT"},
     
     # XSMB
     "Miền Bắc": {"MB", "mb", "Mb"},
